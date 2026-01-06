@@ -1,0 +1,398 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AMAC Smart Revenue System - Government Fintech Design System */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Core Brand Colors - Deep Government Blue + Nigerian Green + Gold */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary - Deep Government Blue */
+    --primary: 217 71% 35%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Secondary - Lighter Blue */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    
+    /* Muted */
+    --muted: 210 30% 95%;
+    --muted-foreground: 215 16% 47%;
+    
+    /* Accent - Nigerian Green */
+    --accent: 142 71% 35%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Success - Prosperity Green */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Warning - Gold */
+    --warning: 43 96% 56%;
+    --warning-foreground: 222 47% 11%;
+    
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Info */
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 71% 35%;
+    
+    --radius: 0.75rem;
+    
+    /* Sidebar */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 71% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 32% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 32% 17%;
+    --sidebar-ring: 217 71% 55%;
+    
+    /* Custom Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217, 71%, 35%) 0%, hsl(217, 71%, 45%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142, 71%, 35%) 0%, hsl(142, 71%, 45%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43, 96%, 46%) 0%, hsl(43, 96%, 56%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 18%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(217, 71%, 35%) 0%, hsl(199, 89%, 48%) 50%, hsl(142, 71%, 35%) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.08), 0 2px 4px -2px hsl(222 47% 11% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.1);
+    --shadow-glow: 0 0 20px hsl(217 71% 35% / 0.3);
+    --shadow-success-glow: 0 0 20px hsl(142 71% 45% / 0.3);
+    
+    /* Chart Colors */
+    --chart-1: 217 71% 45%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 43 96% 56%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 280 65% 60%;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217 71% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+    
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 43 96% 56%;
+    --warning-foreground: 222 47% 11%;
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 217 71% 55%;
+    
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 71% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 32% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 32% 14%;
+    --sidebar-ring: 217 71% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glass Effect */
+  .glass {
+    @apply backdrop-blur-xl bg-card/80 border border-border/50;
+  }
+  
+  /* Stat Card Animations */
+  .stat-card {
+    @apply relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .stat-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: var(--gradient-primary);
+  }
+  
+  .stat-card:hover::before {
+    @apply opacity-5;
+  }
+  
+  /* Live Pulse Animation */
+  .live-pulse {
+    @apply relative;
+  }
+  
+  .live-pulse::after {
+    content: '';
+    @apply absolute -right-1 -top-1 w-3 h-3 bg-success rounded-full;
+    animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+  
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 hsl(142 71% 45% / 0.7);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 8px hsl(142 71% 45% / 0);
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 hsl(142 71% 45% / 0);
+    }
+  }
+  
+  /* Gradient Text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+  
+  .text-gradient-hero {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-hero);
+  }
+  
+  /* Animated Border */
+  .animated-border {
+    @apply relative;
+  }
+  
+  .animated-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl p-[2px];
+    background: var(--gradient-hero);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: border-rotate 4s linear infinite;
+  }
+  
+  @keyframes border-rotate {
+    from { --angle: 0deg; }
+    to { --angle: 360deg; }
+  }
+  
+  /* Shimmer Loading */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.1),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  
+  /* Transaction Row Animation */
+  .transaction-row {
+    @apply transition-all duration-200;
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Admin Sidebar - Command Center Style */
+  .admin-sidebar {
+    background: linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 47% 11%) 50%, hsl(217 71% 12%) 100%);
+  }
+  
+  /* Chart Container */
+  .chart-container {
+    @apply relative p-4 rounded-xl bg-card border border-border;
+  }
+  
+  /* Command Center Card */
+  .command-card {
+    @apply relative overflow-hidden rounded-xl border border-border bg-card;
+    box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 
+                0 4px 12px -2px hsl(222 47% 11% / 0.1),
+                inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+  }
+  
+  .command-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, transparent 50%);
+  }
+  
+  .command-card:hover::before {
+    @apply opacity-100;
+  }
+  
+  /* Live Indicator */
+  .live-indicator {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium;
+    background: hsl(var(--success) / 0.1);
+    color: hsl(var(--success));
+    border: 1px solid hsl(var(--success) / 0.2);
+  }
+  
+  .live-indicator::before {
+    content: '';
+    @apply w-2 h-2 rounded-full bg-success;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  
+  /* Data Stream Effect */
+  .data-stream {
+    @apply relative overflow-hidden;
+  }
+  
+  .data-stream::after {
+    content: '';
+    @apply absolute left-0 top-0 h-full w-8 pointer-events-none;
+    background: linear-gradient(90deg, hsl(var(--background)), transparent);
+    z-index: 10;
+  }
+  
+  /* Status Glow */
+  .status-glow-success {
+    box-shadow: 0 0 20px hsl(var(--success) / 0.3), 0 0 40px hsl(var(--success) / 0.1);
+  }
+  
+  .status-glow-warning {
+    box-shadow: 0 0 20px hsl(var(--warning) / 0.3), 0 0 40px hsl(var(--warning) / 0.1);
+  }
+  
+  .status-glow-destructive {
+    box-shadow: 0 0 20px hsl(var(--destructive) / 0.3), 0 0 40px hsl(var(--destructive) / 0.1);
+  }
+  
+  /* Grid Pattern Background */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+@layer utilities {
+  .fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}

@@ -1,0 +1,61 @@
+
+export type RevenueSource = {
+  value: string
+  label: string
+  company: string
+  category: string
+}
+
+export const revenueSources: RevenueSource[] = [
+  { value: "tenement-rate-1", label: "Tenement Rate (RIOK)", company: "Zenith Collections Ltd.", category: "Property" },
+  { value: "tenement-rate-2", label: "Tenement Rate (General - TAJ)", company: "TAJ Financial Services", category: "Property" },
+  { value: "tenement-rate-3", label: "Tenement Rate (General - Fidelity)", company: "Fidelity Revenue Masters", category: "Property" },
+  { value: "fumigation", label: "Fumigation", company: "Urban Health Inspectors", category: "Health & Environment" },
+  { value: "shops-a", label: "Shop and Kiosk Zone A", company: "Zone A Commercial Agents", category: "Business Premises" },
+  { value: "shops-b", label: "Shop and Kiosk Zone B", company: "Zone B Market Solutions", category: "Business Premises" },
+  { value: "shops-c", label: "Shop and Kiosk Zone C", company: "Zone C Commerce Partners", category: "Business Premises" },
+  { value: "shops-d", label: "Shop and Kiosk Zone D", company: "Zone D Retail collectors", category: "Business Premises" },
+  { value: "hazardous-waste", label: "Disposal of Hazardous/Bio-Hazardous", company: "Eco-Safe Disposals", category: "Health & Environment" },
+  { value: "arrears", label: "Arrears of Revenue", company: "Legacy Debt Recovery", category: "Administrative" },
+  { value: "motorcycles-a", label: "Motorcycles Zone A", company: "Zone A Transport Union", category: "Vehicles" },
+  { value: "motorcycles-c", label: "Commercial Motorcycle Zone C", company: "Zone C Two-Wheeler Levy", category: "Vehicles" },
+  { value: "keke-c", label: "Keke NAPEP Zone C", company: "Tricycle Operators C-Wing", category: "Vehicles" },
+  { value: "tricycle-a", label: "Commercial Tricycle Zone A", company: "Zone A Keke Riders", category: "Vehicles" },
+  { value: "csr-1", label: "Corporate Social Responsibility 1", company: "AMAC Community Fund", category: "Administrative" },
+  { value: "csr-2", label: "Corporate Social Responsibility 2", company: "Social Impact Partners", category: "Administrative" },
+  { value: "building-materials", label: "Building Materials/Construction", company: "Construction Levy Services", category: "Land & Construction" },
+  { value: "signpost", label: "Signpost", company: "Outdoor Advertising Partners", category: "Advertising" },
+  { value: "solid-waste", label: "Solid Waste", company: "Capital Waste Management", category: "Health & Environment" },
+  { value: "waste-evacuation", label: "Waste Evacuation", company: "Metro Environmental", category: "Health & Environment" },
+  { value: "waste-management", label: "Waste Management & Control", company: "Fidelity Clean City", category: "Health & Environment" },
+  { value: "warehouse", label: "Warehouse Storage", company: "Logistics & Storage Fees", category: "Business Premises" },
+  { value: 'fha-lugbe', label: 'FHA Lugbe', company: 'Lugbe Property Managers', category: 'Location-specific' },
+  { value: 'karu-market-1', label: 'Karu Market', company: 'Karu Market Masters', category: 'Market' },
+  { value: 'karu-market-2', label: 'Karu Markets (Duplicate)', company: 'Karu Central Collections', category: 'Market' },
+  { value: 'gosa-market', label: 'Gosa Market', company: 'Gosa Stallion Agency', category: 'Market' },
+  { value: 'karmo-market', label: 'Karmo Market', company: 'Karmo Commerce Guild', category: 'Market' },
+  { value: 'gwagwa', label: 'Gwagwa', company: 'Gwagwa Regional Revenue', category: 'Location-specific' },
+  { value: 'utako-market', label: 'Utako Market Ground Rent/Waste', company: 'Utako Market Services', category: 'Market' },
+  { value: 'public-toilet', label: 'Public Toilet', company: 'Sanitation Solutions Inc.', category: 'Public Services' },
+  { value: 'quarry', label: 'Quarry/Sand Dredging', company: 'Natural Resources Levy Co.', category: 'Natural Resources' },
+  { value: 'tv-license-bc', label: 'Radio/Television Licensing Zone B & C', company: 'Broadcast Fees BC', category: 'Licensing' },
+  { value: 'tv-license-a', label: 'Radio & Television Zone A', company: 'Broadcast Fees A', category: 'Licensing' },
+  { value: 'mobile-advert', label: 'Mobile Advert', company: 'On-The-Go Ad Revenue', category: 'Advertising' },
+  { value: 'street-naming', label: 'Street Naming/House Numbering', company: 'Urban Planning Group', category: 'Land & Construction' },
+  { value: 'food-handling', label: 'Food Handling/Certificate', company: 'Public Health Certifiers', category: 'Health & Environment' },
+  { value: 'filling-stations', label: 'Filling Stations', company: 'Petroleum Retail Services', category: 'Business Premises' },
+  { value: 'hotels', label: 'Hotels', company: 'Hospitality Revenue Managers', category: 'Business Premises' },
+  { value: 'banks', label: 'Banks', company: 'Financial Institutions Levy', category: 'Business Premises' },
+  { value: 'pos-a', label: 'POS Zone A', company: 'Digital Payments Zone A', category: 'Financial Services' },
+  { value: 'pos-b', label: 'POS Zone B', company: 'Digital Payments Zone B', category: 'Financial Services' },
+  { value: 'pos-c', label: 'POS Zone C', company: 'Digital Payments Zone C', category: 'Financial Services' },
+  { value: 'daily-ticketing', label: 'Daily Ticketing', company: 'Daily Toll Collectors', category: 'Transport' },
+  { value: 'corporate-parking', label: 'Corporate Parking', company: 'City Park Systems', category: 'Transport' },
+  { value: 'biz-permit', label: 'Operational Permit on Business Premises', company: 'Business Permit Authority', category: 'Business Premises' },
+  { value: 'agric-produce', label: 'Agriculture Produces', company: 'Farm-to-Market Levy Co.', category: 'Agriculture' },
+  { value: 'furniture', label: 'Furniture', company: 'Artisans & Craftsmen Guild', category: 'Commerce' },
+  { value: 'entertainment', label: 'Merriment & Entertainment', company: 'Events & Leisure Board', category: 'Entertainment' },
+  { value: 'ride-hailing', label: 'Uber, Bolt/Rida', company: 'Ride-Hailing Partners', category: 'Transport' },
+  { value: 'habitation-fitness', label: 'Fitness for Continuous Habitation', company: 'Property Standards Agency', category: 'Property' },
+  { value: 'bank-charges', label: 'Recovery of Excess Bank Charges', company: 'Financial Oversight Corp', category: 'Administrative' }
+]

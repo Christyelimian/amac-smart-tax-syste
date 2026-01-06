@@ -1,0 +1,24 @@
+{
+  "name": "amac-revenue-system",
+  "version": "1.0.0",
+  "description": "Unified AMAC Revenue Collection System - Public Portal + User Dashboard + Admin Panel",
+  "scripts": {
+    "install": "cd frontend && npm install",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "validate": "./validate.sh",
+    "validate:win": "validate.bat",
+    "deploy": "npm run build && npm run docker:build && npm run docker:up",
+    "deploy:win": "npm run build && docker-compose build && docker-compose up -d",
+    "clean": "docker-compose down -v && cd frontend && rm -rf node_modules dist"
+  },
+  "keywords": ["react", "vite", "docker", "revenue", "amac", "supabase", "paystack"],
+  "author": "AMAC Revenue Team",
+  "license": "MIT"
+}

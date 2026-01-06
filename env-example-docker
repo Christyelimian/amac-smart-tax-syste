@@ -1,0 +1,29 @@
+# Lovable Full-Stack Application Environment Variables
+# Copy this file to .env and fill in your actual values
+
+# ======================================
+# SUPABASE CONFIGURATION (Required)
+# ======================================
+# Get these from your Supabase project settings
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+
+# ======================================
+# PAYMENT CONFIGURATION (Frontend Only)
+# ======================================
+# Get this from your Paystack dashboard
+VITE_PAYSTACK_PUBLIC_KEY=pk_test_your-paystack-public-key-here
+
+# ======================================
+# APPLICATION CONFIGURATION
+# ======================================
+# These are automatically set by docker-compose.yml
+# VITE_APP_TITLE=Set by service
+# VITE_APP_ENV=production
+
+# ======================================
+# OPTIONAL: PRODUCTION DATABASE
+# ======================================
+# If using a different Supabase project for production
+# VITE_SUPABASE_URL_PROD=https://prod-project-id.supabase.co
+# VITE_SUPABASE_ANON_KEY_PROD=prod-anon-key-here
