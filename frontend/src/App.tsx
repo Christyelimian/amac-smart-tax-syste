@@ -20,6 +20,11 @@ import UploadProof from "@/pages/UploadProof";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import NotFound from "@/pages/NotFound";
 
+// Assessment system routes
+import ApplyAssessment from "@/pages/ApplyAssessment";
+import AssessmentForm from "@/pages/AssessmentForm";
+import DemandNoticePayment from "@/pages/DemandNoticePayment";
+
 // Auth routes
 import Auth from "@/pages/auth/Auth";
 
@@ -43,6 +48,11 @@ import AdminInsights from "@/pages/admin/AdminInsights";
 import AdminEnforcement from "@/pages/admin/AdminEnforcement";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import PaymentVerification from "@/pages/admin/PaymentVerification";
+
+// Assessment system admin routes
+import AssessmentQueue from "@/pages/admin/AssessmentQueue";
+import AssessmentReview from "@/pages/admin/AssessmentReview";
+import DataMigration from "@/pages/admin/DataMigration";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +130,12 @@ function App() {
                 <Route path="/pay/:serviceCode" element={<PaymentForm />} />
                 <Route path="/upload-proof/:paymentId" element={<UploadProof />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
+
+                {/* Assessment System Routes */}
+                <Route path="/apply-assessment" element={<ApplyAssessment />} />
+                <Route path="/assessment-form/:revenueTypeCode" element={<AssessmentForm />} />
+                <Route path="/pay-demand-notice" element={<DemandNoticePayment />} />
+
                 {/* Mobile app menu routes */}
                 <Route path="/auction" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-2xl">AMAC Auction - Coming Soon</h1></div>} />
                 <Route path="/microfinance" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-2xl">AMAC Microfinance - Coming Soon</h1></div>} />
@@ -147,6 +163,12 @@ function App() {
               <Route element={<ProtectedRoute requireAdmin />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route element={<AdminLayout />}>
+                  {/* Assessment System Routes */}
+                  <Route path="/admin/assessment-queue" element={<AssessmentQueue />} />
+                  <Route path="/admin/assessment-review/:applicationId" element={<AssessmentReview />} />
+                  <Route path="/admin/data-migration" element={<DataMigration />} />
+
+                  {/* Legacy Admin Routes */}
                   <Route path="/admin/legacy" element={<Admin />} />
                   <Route path="/admin/transactions" element={<AdminTransactions />} />
                   <Route path="/admin/analytics" element={<AdminAnalytics />} />

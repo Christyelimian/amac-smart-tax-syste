@@ -33,6 +33,9 @@ import {
   AlertTriangle,
   ScrollText,
   Activity,
+  FileText,
+  Calculator,
+  Database,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -41,6 +44,8 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/assessment-queue', label: 'Assessment Queue', icon: Calculator },
+  { href: '/admin/data-migration', label: 'Data Migration', icon: Database },
   { href: '/admin/transactions', label: 'Transactions', icon: CreditCard },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/payers', label: 'Payers', icon: Users },
