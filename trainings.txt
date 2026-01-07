@@ -1,0 +1,85 @@
+Financial Modeling, Business Planning, Investment Analysis/Valuation and Corporate Accounting Masterclass: Course Outline!
+
+SECTION ONE
+1. Understanding Business Planning
+- What is a Business Plan?
+- Why Do We Write Business Plans?
+- Who is a Business Plan Written for?
+- What are the typical types of Business Plans?
+2. The Structure, Sections of Table of Contents of a Typical Business Plan
+- The Header & Introductory Pages 
+- Table of Contents
+- Executive Summary
+- The Business Background Section
+- Marketing/Market Analysis Section
+- Competition/Competitive Analysis Section
+- Strategy and Operational Model Section
+- Organizational Structure & Management Section
+- Financials Section
+- Risks Analysis & Sensitivity Section
+- Conclusion Page
+- Appendix Page 
+3. Header, Introductory & Table of Contents Pages
+4. Executive Summary Section
+4. Business Background 
+5. Market Analysis & Competitive Analysis Sections
+6. Management & Operational Strategy 
+7. Organizational Structure and Management 
+8. Financials and Profitability Analysis Section
+9. Risks, Sensitivity Analysis & Conclusions
+10. Appendices
+
+SECTION TWO: FINANCIAL MODELING
+Sub-Section 1
+1. Understanding Financial Modeling 
+- What is Financial Modeling 
+- Why Financial Modeling 
+- Becoming a Professional Financial Modeler
+- Skills of a Professional Financial Modeler
+2. Understanding Basic Excel Skills in Modeling 
+3. Things to Know Before You begin Your Model
+
+Sub-Section 1: Building Your Model
+4. Understand Different Styles in Modeling
+5. Building The Cover Page
+5. Analyzing Historic Financials
+6. Building Your Assumptions (Revenues, Cost of Sales, Cost Inflation, Depreciation, CAPEX, Debt, Equity, etc.)
+7. Building Your Schedules (Revenues, Cost of Sales, Cost Inflation, Depreciation, CAPEX, Debt, Equity, etc.)
+8. Building The Income (P&L) Statement  
+9. Building The Cash Flow Statement 
+10. Building The Balance Sheet Statement 
+11. Analyzing Relevant Profitability Ratios in Your Statements (EBITDA, EBITDA Margins, Net Profit Margin, ROE, Asset Turnover, etc)
+
+SECTION THREE: PROFITABILITY RATIOS, VALUATION & INVESTMENT ANALYSIS
+1. PROFITABILITY RATIOS
+- EBITDA Margins
+- Net Income Margin 
+- Return on Equity (ROE)
+- Asset Turnover 
+- Dividends Pay-out Ratio
+- Free Cash Flow to Equity
+- Debt to Equity Ratio
+-
+SECTION FOUR: VALUATION & INVESTMENT ANALYSIS
+1. What is Business Valuation
+2. Types and Categories Business Valuations 
+3. Applying Different Valuation Types in Different Project Scenarios
+4.  Understand Cost Based Valuation
+5. Understand Multiples Based Valuation
+6. Understand DCF Valuation 
+7. Understand PV, NPV, IRR & TV in Valuation
+8. Build Different Valuation Schedules 
+10. Pre-Money & Post-Money Valuation Scheduling
+11. Equity Splitting in Valuation & Investment Partnerships
+ 
+SECTION FIVE: INTERNAL CORPORATE ACCOUNTING SKILLS
+1. Why Internal Corporate Accounting?
+2. Skills for Effective Corporate Accounts Management 
+3. Understand Data Entry, Invoicing & Record Management Systems 
+4. Understand Internal Accounting Rules 
+5. Preparing and Keeping Accounting Records
+6. Basic Accounting Systems for Record Keeping 
+7. Understand the New Tax Laws & How to Keep Your Books Clean 
+
+
+
