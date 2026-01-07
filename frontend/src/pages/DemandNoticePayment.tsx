@@ -48,15 +48,151 @@ const DemandNoticePayment = () => {
 
     try {
       // Simulate API call to search for demand notices
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Mock data - simulating multiple businesses for same phone number
+      // Mock data for testing - simulates real database responses
       let mockNotices = [];
 
       if (searchMethod === 'phone') {
-        // When searching by phone, return ALL unpaid notices for that taxpayer
-        mockNotices = [
-          {
+        // Test phone numbers that return different results
+        const testPhone = searchValue.trim();
+
+        if (testPhone === '0801234567' || testPhone === '08012345678') {
+          // Multiple businesses for John Doe
+          mockNotices = [
+            {
+              id: 1,
+              notice_number: 'DN-2026-001234',
+              taxpayer_name: 'John Doe',
+              taxpayer_phone: '0801234567',
+              taxpayer_email: 'john@email.com',
+              revenue_type: 'Hotel License (Annual)',
+              property_name: 'Transcorp Hilton Hotel',
+              business_address: 'Aguiyi Ironsi St, Maitama, Abuja',
+              zone: 'A',
+              amount_due: 1275000,
+              issue_date: '2026-01-01',
+              due_date: '2026-01-31',
+              status: 'unpaid',
+              breakdown: {
+                base_fee: 100000,
+                room_charge: 975000,
+                category_premium: 200000
+              }
+            },
+            {
+              id: 2,
+              notice_number: 'DN-2026-001235',
+              taxpayer_name: 'John Doe',
+              taxpayer_phone: '0801234567',
+              taxpayer_email: 'john@email.com',
+              revenue_type: 'Shop License (Annual)',
+              property_name: 'John Doe Supermarket',
+              business_address: 'Wuse Market, Wuse II, Abuja',
+              zone: 'A',
+              amount_due: 75000,
+              issue_date: '2026-01-01',
+              due_date: '2026-01-31',
+              status: 'unpaid',
+              breakdown: {
+                base_fee: 25000,
+                size_premium: 35000,
+                location_premium: 15000
+              }
+            },
+            {
+              id: 3,
+              notice_number: 'DN-2026-001236',
+              taxpayer_name: 'John Doe',
+              taxpayer_phone: '0801234567',
+              taxpayer_email: 'john@email.com',
+              revenue_type: 'Restaurant License (Annual)',
+              property_name: 'JD Fast Food Restaurant',
+              business_address: 'Area 11, Garki, Abuja',
+              zone: 'B',
+              amount_due: 125000,
+              issue_date: '2026-01-01',
+              due_date: '2026-01-31',
+              status: 'unpaid',
+              breakdown: {
+                base_fee: 35000,
+                capacity_premium: 65000,
+                category_premium: 25000
+              }
+            }
+          ];
+          setDemandNotices(mockNotices);
+          setShowSelection(true);
+          toast.success(`Found ${mockNotices.length} unpaid demand notices for John Doe`);
+
+        } else if (testPhone === '08123456789') {
+          // Single business for Mary Johnson
+          mockNotices = [
+            {
+              id: 4,
+              notice_number: 'DN-2026-002001',
+              taxpayer_name: 'Mary Johnson',
+              taxpayer_phone: '08123456789',
+              taxpayer_email: 'mary.johnson@email.com',
+              revenue_type: 'Shop License (Annual)',
+              property_name: 'MJ Fashion Boutique',
+              business_address: 'Silverbird Galleria, Abuja',
+              zone: 'A',
+              amount_due: 95000,
+              issue_date: '2026-01-15',
+              due_date: '2026-02-14',
+              status: 'unpaid',
+              breakdown: {
+                base_fee: 25000,
+                size_premium: 45000,
+                prime_location_premium: 25000
+              }
+            }
+          ];
+          setDemandNotices(mockNotices);
+          setSelectedNotice(mockNotices[0]);
+          toast.success('Found 1 unpaid demand notice for Mary Johnson');
+
+        } else if (testPhone === '09087654321') {
+          // Overdue payment for Ahmed Hassan
+          mockNotices = [
+            {
+              id: 5,
+              notice_number: 'DN-2025-009876',
+              taxpayer_name: 'Ahmed Hassan',
+              taxpayer_phone: '09087654321',
+              taxpayer_email: 'ahmed.hassan@email.com',
+              revenue_type: 'Property Tax (Annual)',
+              property_name: 'Residential Property',
+              business_address: 'Wuse II, Abuja',
+              zone: 'A',
+              amount_due: 285000,
+              issue_date: '2025-12-01',
+              due_date: '2025-12-31',
+              status: 'overdue',
+              breakdown: {
+                base_rate: 45000,
+                size_multiplier: 2.5,
+                location_premium: 195000
+              }
+            }
+          ];
+          setDemandNotices(mockNotices);
+          setSelectedNotice(mockNotices[0]);
+          toast.success('Found 1 overdue demand notice for Ahmed Hassan');
+
+        } else {
+          // No results found
+          toast.error(`No demand notices found for phone number ${testPhone}`);
+          return;
+        }
+
+      } else if (searchMethod === 'notice') {
+        // Test notice numbers
+        const testNotice = searchValue.trim().toUpperCase();
+
+        const noticeMap: { [key: string]: any } = {
+          'DN-2026-001234': {
             id: 1,
             notice_number: 'DN-2026-001234',
             taxpayer_name: 'John Doe',
@@ -64,19 +200,15 @@ const DemandNoticePayment = () => {
             taxpayer_email: 'john@email.com',
             revenue_type: 'Hotel License (Annual)',
             property_name: 'Transcorp Hilton Hotel',
-            business_address: 'Aguiyi Ironsi St, Maitama',
+            business_address: 'Aguiyi Ironsi St, Maitama, Abuja',
             zone: 'A',
             amount_due: 1275000,
             issue_date: '2026-01-01',
             due_date: '2026-01-31',
             status: 'unpaid',
-            breakdown: {
-              base_fee: 100000,
-              room_charge: 975000,
-              category_premium: 200000
-            }
+            breakdown: { base_fee: 100000, room_charge: 975000, category_premium: 200000 }
           },
-          {
+          'DN-2026-001235': {
             id: 2,
             notice_number: 'DN-2026-001235',
             taxpayer_name: 'John Doe',
@@ -84,74 +216,62 @@ const DemandNoticePayment = () => {
             taxpayer_email: 'john@email.com',
             revenue_type: 'Shop License (Annual)',
             property_name: 'John Doe Supermarket',
-            business_address: 'Wuse Market, Wuse II',
+            business_address: 'Wuse Market, Wuse II, Abuja',
             zone: 'A',
             amount_due: 75000,
             issue_date: '2026-01-01',
             due_date: '2026-01-31',
             status: 'unpaid',
-            breakdown: {
-              base_fee: 25000,
-              size_premium: 35000,
-              location_premium: 15000
-            }
+            breakdown: { base_fee: 25000, size_premium: 35000, location_premium: 15000 }
           },
-          {
-            id: 3,
-            notice_number: 'DN-2026-001236',
-            taxpayer_name: 'John Doe',
-            taxpayer_phone: '0801234567',
-            taxpayer_email: 'john@email.com',
-            revenue_type: 'Restaurant License (Annual)',
-            property_name: 'JD Fast Food Restaurant',
-            business_address: 'Area 11, Garki',
-            zone: 'B',
-            amount_due: 125000,
-            issue_date: '2026-01-01',
-            due_date: '2026-01-31',
+          'DN-2026-002001': {
+            id: 4,
+            notice_number: 'DN-2026-002001',
+            taxpayer_name: 'Mary Johnson',
+            taxpayer_phone: '08123456789',
+            taxpayer_email: 'mary.johnson@email.com',
+            revenue_type: 'Shop License (Annual)',
+            property_name: 'MJ Fashion Boutique',
+            business_address: 'Silverbird Galleria, Abuja',
+            zone: 'A',
+            amount_due: 95000,
+            issue_date: '2026-01-15',
+            due_date: '2026-02-14',
             status: 'unpaid',
-            breakdown: {
-              base_fee: 35000,
-              capacity_premium: 65000,
-              category_premium: 25000
-            }
-          }
-        ];
-
-        setDemandNotices(mockNotices);
-        setShowSelection(true);
-        toast.success(`Found ${mockNotices.length} unpaid demand notices for this phone number`);
-
-      } else if (searchMethod === 'notice') {
-        // When searching by specific notice number, return just that one
-        const mockNotice = {
-          id: 1,
-          notice_number: searchValue.toUpperCase(),
-          taxpayer_name: 'John Doe',
-          taxpayer_phone: '0801234567',
-          taxpayer_email: 'john@email.com',
-          revenue_type: 'Hotel License (Annual)',
-          property_name: 'Transcorp Hilton Hotel',
-          business_address: 'Aguiyi Ironsi St, Maitama',
-          zone: 'A',
-          amount_due: 1275000,
-          issue_date: '2026-01-01',
-          due_date: '2026-01-31',
-          status: 'unpaid',
-          breakdown: {
-            base_fee: 100000,
-            room_charge: 975000,
-            category_premium: 200000
+            breakdown: { base_fee: 25000, size_premium: 45000, prime_location_premium: 25000 }
+          },
+          'DN-2025-009876': {
+            id: 5,
+            notice_number: 'DN-2025-009876',
+            taxpayer_name: 'Ahmed Hassan',
+            taxpayer_phone: '09087654321',
+            taxpayer_email: 'ahmed.hassan@email.com',
+            revenue_type: 'Property Tax (Annual)',
+            property_name: 'Residential Property',
+            business_address: 'Wuse II, Abuja',
+            zone: 'A',
+            amount_due: 285000,
+            issue_date: '2025-12-01',
+            due_date: '2025-12-31',
+            status: 'overdue',
+            breakdown: { base_rate: 45000, size_multiplier: 2.5, location_premium: 195000 }
           }
         };
 
-        setDemandNotices([mockNotice]);
-        setSelectedNotice(mockNotice);
-        toast.success('Demand notice found!');
+        const mockNotice = noticeMap[testNotice];
+
+        if (mockNotice) {
+          setDemandNotices([mockNotice]);
+          setSelectedNotice(mockNotice);
+          toast.success(`Demand notice ${testNotice} found!`);
+        } else {
+          toast.error(`Demand notice ${testNotice} not found. Try: DN-2026-001234, DN-2026-001235, DN-2026-002001, or DN-2025-009876`);
+          return;
+        }
       }
 
     } catch (error) {
-      toast.error('Demand notice not found. Please check your details and try again.');
+      toast.error('Search failed. Please try again.');
     } finally {
       setSearching(false);
     }
@@ -256,10 +376,14 @@ const DemandNoticePayment = () => {
         scanCount++;
 
         // For demo: simulate finding a QR code after a few seconds
-        if (scanCount === 150) { // About 5 seconds
+        // Cycle through different test notices for variety
+        const testNotices = ['DN-2026-001234', 'DN-2026-001235', 'DN-2026-002001', 'DN-2025-009876'];
+        const noticeIndex = Math.floor(scanCount / 50) % testNotices.length; // Change every ~1.5 seconds
+
+        if (scanCount === 100 + (noticeIndex * 50)) { // Staggered timing
           const mockQRData = {
             type: 'demand_notice',
-            notice_number: 'DN-2026-001234',
+            notice_number: testNotices[noticeIndex],
             payment_url: `${window.location.origin}/pay-demand-notice`,
             generated_at: new Date().toISOString()
           };
@@ -502,7 +626,7 @@ const DemandNoticePayment = () => {
                                 </div>
                                 <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
                                   <div className="bg-black bg-opacity-50 text-white text-sm px-3 py-2 rounded">
-                                    Scanning... Point camera at QR code
+                                    Scanning... (Demo: QR detected in 3-5 seconds)
                                   </div>
                                   <button
                                     onClick={() => {
@@ -760,6 +884,22 @@ const DemandNoticePayment = () => {
               <p>📞 Phone: +234 xxx xxx xxxx</p>
               <p>📧 Email: support@amac.abuja.gov.ng</p>
               <p>🏢 Visit: AMAC Headquarters, Maitama</p>
+            </div>
+
+            {/* Testing Information */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h4 className="font-medium text-gray-700 mb-2">🧪 Testing Data (Demo Only)</h4>
+              <div className="text-xs text-gray-600 space-y-1">
+                <p><strong>Phone Numbers:</strong></p>
+                <p>• 0801234567 - John Doe (3 businesses)</p>
+                <p>• 08123456789 - Mary Johnson (1 business)</p>
+                <p>• 09087654321 - Ahmed Hassan (overdue)</p>
+                <p><strong>Notice Numbers:</strong></p>
+                <p>• DN-2026-001234 - Hilton Hotel</p>
+                <p>• DN-2026-001235 - Supermarket</p>
+                <p>• DN-2026-002001 - Fashion Boutique</p>
+                <p>• DN-2025-009876 - Overdue Property Tax</p>
+              </div>
             </div>
           </div>
         </div>
