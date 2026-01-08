@@ -31,6 +31,7 @@ const DemandNoticePayment = () => {
   // Camera/QR code scanning state
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -277,10 +278,68 @@ const DemandNoticePayment = () => {
     }
   };
 
-  const handlePayment = () => {
-    // In a real app, this would integrate with Paystack
-    toast.success('Redirecting to payment...');
-    // navigate to payment gateway
+  const handlePayment = async () => {
+    if (!selectedNotice) {
+      toast.error('No demand notice selected');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      toast.info('Initializing payment...');
+      
+      // Prepare payment data from the selected demand notice
+      const paymentData = {
+        revenueType: selectedNotice.revenue_type || 'GENERAL_PAYMENT',
+        serviceName: selectedNotice.revenue_type || 'General Payment',
+        amount: selectedNotice.amount_due,
+        payerName: selectedNotice.taxpayer_name,
+        payerPhone: selectedNotice.taxpayer_phone,
+        payerEmail: selectedNotice.taxpayer_email || undefined,
+        businessAddress: selectedNotice.business_address || undefined,
+        registrationNumber: selectedNotice.registration_number || undefined,
+        zone: selectedNotice.zone ? `zone_${selectedNotice.zone.toLowerCase()}` : undefined,
+        notes: `Payment for demand notice ${selectedNotice.notice_number}`
+      };
+
+      console.log('📋 Payment data:', paymentData);
+
+      // Try to initialize payment with the local server
+      const response = await fetch('http://localhost:3001/initialize-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to initialize payment');
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Payment initialization failed');
+      }
+
+      console.log('✅ Payment initialized:', result);
+      toast.success('Payment initialized successfully!');
+      
+      // Redirect to Remita payment page
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+      } else {
+        throw new Error('No payment URL received');
+      }
+
+    } catch (error) {
+      console.error('❌ Payment error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getDaysLeft = (dueDate: string) => {
@@ -853,10 +912,20 @@ const DemandNoticePayment = () => {
 
               <button
                 onClick={handlePayment}
-                className="w-full bg-[#006838] text-white py-4 px-4 rounded-lg font-semibold hover:bg-[#005a2d] transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-[#006838] text-white py-4 px-4 rounded-lg font-semibold hover:bg-[#005a2d] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isProcessing}
               >
-                <CreditCard className="w-5 h-5" />
-                Proceed to Payment
+                {isProcessing ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    Processing Payment...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    Pay Now with Remita
+                  </>
+                )}
               </button>
 
               <div className="text-center">

@@ -48,26 +48,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profileData } = await supabase
+      // Fetch profile data with error handling for missing table/record
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (profileData) {
+      if (profileError) {
+        console.warn('Profile fetch error:', profileError.message);
+        // If profile doesn't exist, create a minimal one
+        if (profileError.code === 'PGRST116' || profileError.message.includes('404')) {
+          console.log('Creating minimal profile for user:', userId);
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: user?.email || null,
+              full_name: user?.email?.split('@')[0] || 'User',
+              phone: null,
+              zone: null
+            })
+            .select()
+            .single();
+
+          if (newProfile) {
+            setProfile(newProfile as Profile);
+            console.log('Created new profile:', newProfile);
+          } else {
+            console.error('Failed to create profile:', createError);
+            // Set minimal profile data to allow app to function
+            setProfile({
+              id: userId,
+              email: user?.email || null,
+              full_name: user?.email?.split('@')[0] || 'User',
+              phone: null,
+              zone: null
+            });
+          }
+        }
+      } else if (profileData) {
         setProfile(profileData as Profile);
       }
 
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
+      // Fetch roles with error handling
+      try {
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId);
 
-      if (rolesData) {
-        setRoles(rolesData as UserRole[]);
+        if (rolesError) {
+          console.warn('Roles fetch error:', rolesError.message);
+        } else if (rolesData) {
+          setRoles(rolesData as UserRole[]);
+        }
+      } catch (rolesError) {
+        console.error('Error fetching roles:', rolesError);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
     }
   };
 

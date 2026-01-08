@@ -19,6 +19,9 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminInsights from "./pages/AdminInsights";
 import AdminEnforcement from "./pages/AdminEnforcement";
 import AdminAuditLogs from "./pages/AdminAuditLogs";
+import AdminVerifyPayments from "./pages/AdminVerifyPayments";
+import AdminRevenueAnalytics from "./pages/AdminRevenueAnalytics";
+import AdminBankReconciliation from "./pages/AdminBankReconciliation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +49,9 @@ const App = () => (
             <Route path="/admin/insights" element={<AdminInsights />} />
             <Route path="/admin/enforcement" element={<AdminEnforcement />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+            <Route path="/admin/verify-payments" element={<AdminVerifyPayments />} />
+            <Route path="/admin/revenue-analytics" element={<AdminRevenueAnalytics />} />
+            <Route path="/admin/bank-reconciliation" element={<AdminBankReconciliation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
