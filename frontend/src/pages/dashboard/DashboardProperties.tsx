@@ -105,7 +105,7 @@ export default function DashboardProperties() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.property_type || !formData.revenue_type || !formData.zone) {
+    if (!formData.name || !formData.property_type || !formData.revenue_type) {
       toast({
         title: 'Missing fields',
         description: 'Please fill in all required fields',
@@ -119,7 +119,7 @@ export default function DashboardProperties() {
       const revenueInfo = revenueTypes.find((r) => r.id === formData.revenue_type);
       const zoneInfo = zones.find((z) => z.id === formData.zone);
       const baseAmount = revenueInfo?.baseAmount || 10000;
-      const multiplier = zoneInfo?.multiplier || 1;
+      const multiplier = formData.zone && zoneInfo ? zoneInfo.multiplier : 1;
       const amountDue = baseAmount * multiplier;
 
       const dueDate = new Date();
@@ -237,13 +237,13 @@ export default function DashboardProperties() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Zone *</Label>
+                    <Label>Zone (Optional)</Label>
                     <Select
                       value={formData.zone}
                       onValueChange={(value) => setFormData({ ...formData, zone: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select zone" />
+                        <SelectValue placeholder="Select zone (Optional)" />
                       </SelectTrigger>
                       <SelectContent>
                         {zones.map((zone) => (

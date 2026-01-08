@@ -158,10 +158,11 @@ const PaymentForm = () => {
       return;
     }
 
-    if (service.has_zones && !formData.zone) {
-      toast.error("Please select a zone for this service");
-      return;
-    }
+    // Zone is now optional - no validation required
+    // if (service.has_zones && !formData.zone) {
+    //   toast.error("Please select a zone for this service");
+    //   return;
+    // }
 
     setIsProcessing(true);
 
@@ -224,10 +225,11 @@ const PaymentForm = () => {
       return;
     }
 
-    if (service.has_zones && !formData.zone) {
-      toast.error("Please select a zone for this service");
-      return;
-    }
+    // Zone is now optional - no validation required
+    // if (service.has_zones && !formData.zone) {
+    //   toast.error("Please select a zone for this service");
+    //   return;
+    // }
 
     setIsProcessing(true);
 
@@ -410,7 +412,7 @@ const PaymentForm = () => {
 
                   {service.has_zones && (
                     <div>
-                      <Label htmlFor="zone">Zone *</Label>
+                      <Label htmlFor="zone">Zone (Optional)</Label>
                       <Select
                         value={formData.zone}
                         onValueChange={(value) =>
@@ -418,7 +420,7 @@ const PaymentForm = () => {
                         }
                       >
                         <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select Zone" />
+                          <SelectValue placeholder="Select Zone (Optional)" />
                         </SelectTrigger>
                         <SelectContent>
                           {zones.map((zone) => (
