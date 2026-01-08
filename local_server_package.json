@@ -1,0 +1,18 @@
+{
+  "name": "amac-payment-server",
+  "version": "1.0.0",
+  "description": "Local payment server for AMAC - workaround for missing Edge Function",
+  "main": "local_payment_server.js",
+  "scripts": {
+    "start": "node local_payment_server.js",
+    "dev": "nodemon local_payment_server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

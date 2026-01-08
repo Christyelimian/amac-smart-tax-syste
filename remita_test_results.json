@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-08T15:58:41.935Z",
+  "rrr": "210799187154",
+  "paymentUrl": "https://demo.remita.net/remita/ecomm/finalize.reg?rrr=210799187154&merchantId=2547916",
+  "testCard": {
+    "number": "5178 6810 0000 0002",
+    "expiry": "05/30",
+    "cvv": "000",
+    "otp": "123456"
+  },
+  "config": {
+    "merchantId": "2547916",
+    "serviceTypeId": "4430731"
+  }
+}
