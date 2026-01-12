@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "start:api": "npx tsx src/api/server.ts",
-    "start": "concurrently \"npm run start:api\" \"npm run dev\"",
+    "start": "node src/dev-server.js",
+    "start:full": "concurrently \"npm run start:api\" \"node src/dev-server.js\"",
     "test": "npm run build && npm run start:api"
   },
   "dependencies": {

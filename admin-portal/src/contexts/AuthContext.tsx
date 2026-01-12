@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface User {
@@ -15,8 +15,6 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
 }
-
-import React from 'react';
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
@@ -71,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       localStorage.setItem('amac_admin_token', data.token);
       setUser(data.admin);
-      navigate('/dashboard');
+      navigate('/admin-portal/dashboard');
     } catch (error) {
       throw error;
     }
@@ -80,12 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('amac_admin_token');
     setUser(null);
-    navigate('/login');
+    navigate('/admin-portal/login');
   };
 
   useEffect(() => {
-    if (!user && !isLoading && location.pathname !== '/login') {
-      navigate('/login');
+    if (!user && !isLoading && location.pathname !== '/admin-portal/login') {
+      navigate('/admin-portal/login');
     }
   }, [user, isLoading, location, navigate]);
 
@@ -102,3 +100,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export default AuthContext;
