@@ -25,6 +25,9 @@ import ApplyAssessment from "@/pages/ApplyAssessment";
 import AssessmentForm from "@/pages/AssessmentForm";
 import DemandNoticePayment from "@/pages/DemandNoticePayment";
 
+// Receipt verification
+import ReceiptVerification from "@/pages/ReceiptVerification";
+
 // Auth routes
 import Auth from "@/pages/auth/Auth";
 
@@ -150,6 +153,10 @@ function App() {
                 <Route path="/apply-assessment" element={<ApplyAssessment />} />
                 <Route path="/assessment-form/:revenueTypeCode" element={<AssessmentForm />} />
                 <Route path="/pay-demand-notice" element={<DemandNoticePayment />} />
+
+                {/* Receipt Verification Route */}
+                <Route path="/verify-receipt" element={<ReceiptVerification />} />
+                <Route path="/verify/:receiptNumber" element={<ReceiptVerification />} />
 
                 {/* Mobile app menu routes */}
                 <Route path="/auction" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-2xl">AMAC Auction - Coming Soon</h1></div>} />
