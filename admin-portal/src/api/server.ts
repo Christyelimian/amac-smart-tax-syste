@@ -6,7 +6,7 @@ import { connectToDatabase } from '../lib/mongodb.js';
 
 const JWT_SECRET = 'amac-admin-secret-key-2024';
 const app = express();
-const PORT = 3004;
+const PORT = process.env.PORT || 3004;
 
 // Middleware
 app.use(cors({
