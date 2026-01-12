@@ -53,7 +53,7 @@ const PaymentSuccess = () => {
         return;
       }
 
-      try {
+try {
         console.log("Verifying payment for reference:", reference, "RRR:", rrr, "Gateway:", gateway);
         
         // Use appropriate verification endpoint based on gateway
@@ -61,19 +61,22 @@ const PaymentSuccess = () => {
         
         let data;
         
-        // Use direct fetch with auth headers to avoid 401 errors
-        const response = await fetch(
-          `https://kfummdjejjjccfbzzifc.supabase.co/functions/v1/${verifyEndpoint}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg`,
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg',
-            },
-            body: JSON.stringify({ reference, rrr }),
-          }
-        );
+        // Try verification with a timeout and retry
+        const response = await Promise.race([
+          fetch(
+            `https://kfummdjejjjccfbzzifc.supabase.co/functions/v1/${verifyEndpoint}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg`,
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg',
+              },
+              body: JSON.stringify({ reference, rrr }),
+            }
+          ),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000))
+        ]);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -82,10 +85,7 @@ const PaymentSuccess = () => {
         }
 
         data = await response.json();
-
-        
-
-        console.log("Verification response:", data);
+        console.log("✅ Verification response:", data);
         setPaymentDetails(data);
 
         // Trigger confetti only on success
@@ -127,12 +127,15 @@ const PaymentSuccess = () => {
       } catch (err) {
         console.error("Payment verification failed:", err);
         
-        // Check if offline and show payment success with cached data
-        if (err instanceof Error && 
-            (err.message.includes('Failed to fetch') || 
-             err.message.includes('network') || 
-             err.message.includes('ERR_INTERNET_DISCONNECTED'))) {
-          console.log("User is offline - showing payment confirmation from URL params");
+        // Check if actually offline (not other errors)
+        const isOfflineError = err instanceof Error && (
+          err.message.includes('Failed to fetch') && 
+          !err.message.includes('HTTP 4') && !err.message.includes('HTTP 5') && // Exclude server errors
+          !err.message.includes('401') && !err.message.includes('403') && !err.message.includes('404') // Exclude auth/not found errors
+        );
+        
+        if (isOfflineError) {
+          console.log("Network detected as offline - showing payment confirmation from URL params");
           // Show success page with data from URL when offline
           setPaymentDetails({
             success: true,
@@ -147,7 +150,35 @@ const PaymentSuccess = () => {
             paid_at: new Date().toISOString(),
             message: 'Payment completed! Receipt will be available when you reconnect to internet.'
           });
+          
+          // Try to verify again after 3 seconds (in case it was temporary)
+          setTimeout(async () => {
+            try {
+              console.log("🔄 Retrying payment verification...");
+              const retryResponse = await fetch(
+                `https://kfummdjejjjccfbzzifc.supabase.co/functions/v1/${gateway === 'remita' ? 'verify-remita' : 'verify-payment'}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg`,
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg',
+                  },
+                  body: JSON.stringify({ reference, rrr }),
+                }
+              );
+              
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                console.log("✅ Retry successful, updating payment details:", retryData);
+                setPaymentDetails(retryData);
+              }
+            } catch (retryError) {
+              console.log("Retry failed - keeping offline display");
+            }
+          }, 3000);
         } else {
+          console.error("❌ Non-offline error:", err);
           setError(err instanceof Error ? err.message : "Failed to verify payment");
         }
       } finally {
