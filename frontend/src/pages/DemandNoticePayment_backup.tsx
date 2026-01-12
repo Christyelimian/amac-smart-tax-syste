@@ -16,7 +16,6 @@ import {
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-import { supabase } from '@/integrations/supabase/client';
 
 // Note: For production, install jsQR: npm install jsqr
 // For now, we'll simulate QR detection
@@ -305,135 +304,35 @@ const DemandNoticePayment = () => {
 
       console.log('📋 Payment data:', paymentData);
 
-// Initialize Remita payment using edge function with direct fetch
-      let data;
-
-      try {
-        console.log('📡 Calling edge function directly...');
-        const response = await fetch(
-          'https://kfummdjejjjccfbzzifc.supabase.co/functions/v1/initialize-remita',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg`,
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg',
-            },
-            body: JSON.stringify(paymentData),
-          }
-        );
-
-        console.log('📡 Response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Edge function error:', errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-
-        data = await response.json();
-        console.log('✅ Edge function response:', data);
-
-      } catch (funcError) {
-        console.error("❌ Edge function failed:", funcError);
-        throw new Error(funcError instanceof Error ? funcError.message : "Failed to initialize Remita payment");
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || "Remita payment initialization failed");
-      }
-
-      console.log('✅ Remita payment initialized:', data);
-      toast.success('Payment initialized successfully!');
-      
-      // Load Remita inline payment script and process payment
-      const existingScript = document.querySelector('script[src*="remita-pay-inline"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      console.log('🔧 Initializing Remita with:', {
-        publicKey: data.publicKey,
-        rrr: data.rrr,
-        payerName: data.payerName,
-        payerEmail: data.payerEmail,
-        payerPhone: data.payerPhone,
-        merchantId: data.merchantId
+      // Try to initialize payment with the local server
+      const response = await fetch('http://localhost:3001/initialize-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData),
       });
 
-      const script = document.createElement('script');
-      script.src = 'https://demo.remita.net/payment/v1/remita-pay-inline.bundle.js';
-      script.onload = () => {
-        try {
-          // Wait for script to fully load
-          setTimeout(() => {
-            // @ts-ignore - Remita global object
-            const RmPaymentEngine = (window as any).RmPaymentEngine;
-            if (!RmPaymentEngine) {
-              console.error('RmPaymentEngine not found on window:', Object.keys(window));
-              throw new Error('Remita payment engine not loaded');
-            }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to initialize payment');
+      }
 
-            console.log('✅ Remita engine loaded, initializing payment...');
+      const result = await response.json();
 
-            const paymentConfig = {
-              key: data.publicKey,
-              customerId: data.merchantId,
-              processRrr: true,
-              transactionId: String(data.rrr),
-              firstName: data.payerName?.split(' ')[0] || data.payerName,
-              lastName: data.payerName?.split(' ').slice(1).join(' ') || '',
-              email: data.payerEmail,
-              phone: data.payerPhone,
-              amount: data.amount,
-              narration: `Payment for demand notice ${selectedNotice.notice_number}`,
-              extendedData: {
-                customFields: [
-                  { name: 'rrr', value: String(data.rrr) },
-                  { name: 'payerName', value: data.payerName },
-                  { name: 'payerEmail', value: data.payerEmail },
-                  { name: 'payerPhone', value: data.payerPhone },
-                  { name: 'noticeNumber', value: selectedNotice.notice_number },
-                  { name: 'revenueType', value: selectedNotice.revenue_type },
-                ],
-              },
-              onSuccess: (response: any) => {
-                console.log('✅ Remita payment successful:', response);
-                toast.success('Payment completed successfully!');
-                window.location.href = `/payment-success?ref=${data.reference}&rrr=${data.rrr}&gateway=remita`;
-              },
-              onError: (response: any) => {
-                console.error('❌ Remita payment error:', response);
-                const errorMessage = response?.message || response?.error || 'Payment failed. Please try again.';
-                toast.error(errorMessage);
-                setIsProcessing(false);
-              },
-              onClose: () => {
-                console.log('🔸 Remita payment modal closed by user');
-                setIsProcessing(false);
-              },
-            };
+      if (!result.success) {
+        throw new Error(result.error || 'Payment initialization failed');
+      }
 
-            console.log('📋 Payment config:', paymentConfig);
-
-            const paymentEngine = RmPaymentEngine.init(paymentConfig);
-            paymentEngine.showPaymentWidget();
-
-          }, 1000); // Give script time to initialize
-        } catch (scriptError) {
-          console.error('❌ Error initializing Remita widget:', scriptError);
-          toast.error("Failed to initialize payment widget. Please try again.");
-          setIsProcessing(false);
-        }
-      };
+      console.log('✅ Payment initialized:', result);
+      toast.success('Payment initialized successfully!');
       
-      script.onerror = (error) => {
-        console.error('❌ Failed to load Remita script:', error);
-        toast.error("Failed to load payment gateway. Please try again.");
-        setIsProcessing(false);
-      };
-      
-      document.body.appendChild(script);
+      // Redirect to Remita payment page
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+      } else {
+        throw new Error('No payment URL received');
+      }
 
     } catch (error) {
       console.error('❌ Payment error:', error);

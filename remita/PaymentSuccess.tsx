@@ -6,7 +6,6 @@ import confetti from "canvas-confetti";
 import Header from "@/components/ui/Header";
 import Footer from "@/components/ui/Footer";
 import { Button } from "@/components/ui/button";
-import PaymentStatusTracker from "@/components/PaymentStatusTracker";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentDetails {
@@ -36,11 +35,10 @@ const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const [copied, setCopied] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get reference and RRR from URL params
+  // Get reference from URL params (Paystack uses both 'reference' and 'trxref')
   const reference = searchParams.get("ref") || searchParams.get("reference") || searchParams.get("trxref");
   const rrr = searchParams.get("rrr");
   const gateway = searchParams.get("gateway") || (rrr ? 'remita' : 'paystack');
@@ -59,31 +57,14 @@ const PaymentSuccess = () => {
         // Use appropriate verification endpoint based on gateway
         const verifyEndpoint = gateway === 'remita' ? 'verify-remita' : 'verify-payment';
         
-        let data;
-        
-        // Use direct fetch with auth headers to avoid 401 errors
-        const response = await fetch(
-          `https://kfummdjejjjccfbzzifc.supabase.co/functions/v1/${verifyEndpoint}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg`,
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmdW1tZGplampqY2NmYnp6aWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2OTIyMzQsImV4cCI6MjA4MzI2ODIzNH0.MWQbDQ0YINAAWC0OpByVE4tCWWHlVWE4rXnRi8d_sYg',
-            },
-            body: JSON.stringify({ reference, rrr }),
-          }
-        );
+        const { data, error: funcError } = await supabase.functions.invoke(verifyEndpoint, {
+          body: { reference, rrr },
+        });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Verification error:', errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        if (funcError) {
+          console.error("Verification error:", funcError);
+          throw new Error(funcError.message || "Failed to verify payment");
         }
-
-        data = await response.json();
-
-        
 
         console.log("Verification response:", data);
         setPaymentDetails(data);
@@ -135,73 +116,6 @@ const PaymentSuccess = () => {
     verifyPayment();
   }, [reference, rrr, gateway]);
 
-  const handlePaymentComplete = (payment: any) => {
-    console.log("Payment completed:", payment);
-    setPaymentDetails({
-      success: true,
-      status: payment.status,
-      reference: payment.reference,
-      receipt_number: payment.receipt_number,
-      amount: payment.amount,
-      payer_name: payment.payer_name,
-      service_name: payment.service_name,
-      payment_method: payment.payment_method,
-      paid_at: payment.confirmed_at,
-      message: "Payment confirmed successfully"
-    });
-    setShowSuccess(true);
-
-    // Trigger confetti
-    const duration = 3 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-    function randomInRange(min: number, max: number) {
-      return Math.random() * (max - min) + min;
-    }
-
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
-      }
-
-      const particleCount = 50 * (timeLeft / duration);
-
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        colors: ["#006838", "#10B981", "#ffffff"],
-      });
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        colors: ["#006838", "#10B981", "#ffffff"],
-      });
-    }, 250);
-
-    setTimeout(() => clearInterval(interval), duration);
-  };
-
-  const handlePaymentFailure = (errorMessage: string) => {
-    setError(errorMessage);
-    setPaymentDetails({
-      success: false,
-      status: 'failed',
-      reference: reference || '',
-      receipt_number: null,
-      amount: 0,
-      payer_name: '',
-      service_name: '',
-      payment_method: '',
-      paid_at: '',
-      message: errorMessage
-    });
-  };
-
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -234,26 +148,16 @@ const PaymentSuccess = () => {
         second: "2-digit",
       });
 
-  // Show payment status tracker if we have a reference and haven't confirmed payment yet
-  if (reference && !showSuccess && !error) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
         <main className="flex-1 flex items-center justify-center py-12">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Payment Processing...
-              </h1>
-              <p className="text-muted-foreground">
-                We're confirming your payment with Remita. This usually takes 30 seconds.
-              </p>
-            </div>
-            <PaymentStatusTracker
-              reference={reference}
-              onComplete={handlePaymentComplete}
-              onFailure={handlePaymentFailure}
-            />
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <h1 className="text-xl font-semibold text-foreground mb-2">Verifying Payment...</h1>
+            <p className="text-muted-foreground">Please wait while we confirm your transaction</p>
           </div>
         </main>
         <Footer />
@@ -262,7 +166,7 @@ const PaymentSuccess = () => {
   }
 
   // Error state
-  if (error) {
+  if (error || !paymentDetails) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
@@ -276,8 +180,8 @@ const PaymentSuccess = () => {
               <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
                 <XCircle className="w-10 h-10 text-destructive" />
               </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">Payment Failed</h1>
-              <p className="text-muted-foreground mb-6">{error}</p>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Verification Failed</h1>
+              <p className="text-muted-foreground mb-6">{error || "Unable to verify payment"}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild variant="outline">
                   <Link to="/">
@@ -286,7 +190,7 @@ const PaymentSuccess = () => {
                   </Link>
                 </Button>
                 <Button asChild>
-                  <Link to="/pay">Try Again</Link>
+                  <Link to="/services">Try Again</Link>
                 </Button>
               </div>
             </motion.div>
@@ -297,15 +201,36 @@ const PaymentSuccess = () => {
     );
   }
 
-  // Show success page only after payment is confirmed
-  if (!showSuccess || !paymentDetails) {
+  // Failed payment state
+  if (!paymentDetails.success) {
     return (
       <div className="min-h-screen flex flex-col bg-muted/30">
         <Header />
         <main className="flex-1 flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Preparing your receipt...</p>
+          <div className="container mx-auto px-4 max-w-lg text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card rounded-2xl p-8 border border-border"
+            >
+              <div className="w-20 h-20 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-6">
+                <XCircle className="w-10 h-10 text-warning" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Payment Not Completed</h1>
+              <p className="text-muted-foreground mb-4">{paymentDetails.message}</p>
+              <p className="text-sm text-muted-foreground mb-6">Reference: {paymentDetails.reference}</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild variant="outline">
+                  <Link to="/">
+                    <Home className="w-4 h-4 mr-2" />
+                    Go Home
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/services">Try Again</Link>
+                </Button>
+              </div>
+            </motion.div>
           </div>
         </main>
         <Footer />
@@ -313,14 +238,13 @@ const PaymentSuccess = () => {
     );
   }
 
-  // Real timeline from payment data
   const timeline = [
-    { label: "Payment initiated", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
-    { label: "Sent to Remita", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
-    { label: "Bank processing", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
-    { label: "Amount received", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
-    { label: "AMAC account credited", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
-    { label: "Receipt generated", time: paymentDetails.paid_at ? new Date(paymentDetails.paid_at).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : paymentTime, done: true },
+    { label: "Payment initiated", time: paymentTime, done: true },
+    { label: "Sent to Paystack", time: paymentTime, done: true },
+    { label: "Bank processing", time: paymentTime, done: true },
+    { label: "Amount received", time: paymentTime, done: true },
+    { label: "AMAC account credited", time: paymentTime, done: true },
+    { label: "Receipt generated", time: paymentTime, done: true },
   ];
 
   // Success state
@@ -541,7 +465,7 @@ const PaymentSuccess = () => {
             className="flex flex-col sm:flex-row gap-3"
           >
             <Button asChild variant="outline" size="lg" className="flex-1 rounded-xl">
-              <Link to="/pay">
+              <Link to="/services">
                 Make Another Payment <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>

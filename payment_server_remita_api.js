@@ -13,7 +13,7 @@ const PORT = 3002;
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3003',  'https://smarttax.com.ng', 'https://amac-smart-tax-system.vercel.app'], 
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3003', 'https://amac-smart-tax-system.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: '*',
   credentials: true,
@@ -31,9 +31,10 @@ const REMITA_CONFIG = {
   apiUrl: 'https://demo.remita.net'
 };
 
-// Generate SHA-512 hash for Remita API (matching test script)
-function generateRemitaHash(data) {
-  return crypto.createHash('sha512').update(data).digest('hex');
+// Generate SHA-512 hash for Remita API
+function generateRemitaHash(merchantId, serviceTypeId, orderId, totalAmount, apiKey) {
+  const hashString = `${merchantId}${serviceTypeId}${orderId}${totalAmount}${apiKey}`;
+  return crypto.createHash('sha512').update(hashString).digest('hex');
 }
 
 // Generate unique order ID
@@ -45,10 +46,7 @@ function generateOrderId() {
 function initializeRemitaPayment(payload) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify(payload);
-
-    // Generate the consumer token hash for Authorization header
-    const consumerToken = generateRemitaHash(`${REMITA_CONFIG.merchantId}${REMITA_CONFIG.serviceTypeId}${payload.orderId}${payload.amount}${REMITA_CONFIG.apiKey}`);
-
+    
     const options = {
       hostname: 'demo.remita.net',
       port: 443,
@@ -57,7 +55,13 @@ function initializeRemitaPayment(payload) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'Authorization': `remitaConsumerKey=${REMITA_CONFIG.merchantId},remitaConsumerToken=${consumerToken}`
+        'Authorization': `remitaConsumerKey=${REMITA_CONFIG.merchantId},remitaConsumerToken=${generateRemitaHash(
+          REMITA_CONFIG.merchantId,
+          REMITA_CONFIG.serviceTypeId,
+          payload.orderId,
+          payload.totalAmount,
+          REMITA_CONFIG.apiKey
+        )}`
       }
     };
 
@@ -66,29 +70,16 @@ function initializeRemitaPayment(payload) {
 
     const req = https.request(options, (res) => {
       let data = '';
-
+      
       res.on('data', (chunk) => {
         data += chunk;
       });
-
+      
       res.on('end', () => {
         console.log('📥 Remita Response:', data);
         try {
-          // Handle JSONP responses from Remita
-          let cleanData = data.trim();
-
-          // Remove jsonp wrapper variations
-          if (cleanData.startsWith('jsonp(') && cleanData.endsWith(')')) {
-            cleanData = cleanData.substring(6, cleanData.length - 1);
-          } else if (cleanData.startsWith('jsonp (') && cleanData.endsWith(')')) {
-            cleanData = cleanData.substring(7, cleanData.length - 1);
-          }
-
-          // Clean up any remaining whitespace
-          cleanData = cleanData.trim();
-
-          const response = JSON.parse(cleanData);
-
+          const response = JSON.parse(data);
+          
           if (response.statuscode === '025' || response.statuscode === '00') {
             resolve(response);
           } else {
@@ -115,18 +106,18 @@ function initializeRemitaPayment(payload) {
 app.post('/initialize-payment', async (req, res) => {
   console.log('🚀 Payment Server - Initialize Payment');
   console.log('📋 Request Body:', JSON.stringify(req.body, null, 2));
-
+  
   try {
-    const {
-      revenueType,
-      serviceName,
-      amount,
-      payerName,
-      payerPhone,
-      payerEmail,
-      businessAddress
+    const { 
+      revenueType, 
+      serviceName, 
+      amount, 
+      payerName, 
+      payerPhone, 
+      payerEmail, 
+      businessAddress 
     } = req.body;
-
+  
     // Validate required fields
     if (!revenueType || !serviceName || !amount || !payerName || !payerPhone) {
       return res.status(400).json({
@@ -139,13 +130,10 @@ app.post('/initialize-payment', async (req, res) => {
     const orderId = generateOrderId();
     console.log('📝 Generated Order ID:', orderId);
 
-    // Prepare Remita payload (matching the working test script)
+    // Prepare Remita payload
     const remitaPayload = {
-      merchantId: REMITA_CONFIG.merchantId,
       serviceTypeId: REMITA_CONFIG.serviceTypeId,
-      apiKey: REMITA_CONFIG.publicKey,
-      hash: generateRemitaHash(`${REMITA_CONFIG.merchantId}${REMITA_CONFIG.serviceTypeId}${orderId}${amount}${REMITA_CONFIG.apiKey}`),
-      amount: amount,
+      amount: amount.toString(),
       orderId: orderId,
       payerName: payerName,
       payerEmail: payerEmail || `${payerPhone}@placeholder.com`,
@@ -154,13 +142,11 @@ app.post('/initialize-payment', async (req, res) => {
       customFields: [
         {
           name: 'revenueType',
-          value: revenueType,
-          type: 'String'
+          value: revenueType
         },
         {
           name: 'serviceName',
-          value: serviceName,
-          type: 'String'
+          value: serviceName
         }
       ]
     };
@@ -177,40 +163,27 @@ app.post('/initialize-payment', async (req, res) => {
 
     // Call Remita API
     const remitaResponse = await initializeRemitaPayment(remitaPayload);
-
+    
     console.log('✅ Remita Response:', remitaResponse);
 
     // Extract RRR from response
     const rrr = remitaResponse.RRR || remitaResponse.rrr;
-
+    
     if (!rrr) {
       throw new Error('No RRR received from Remita');
     }
 
     console.log('🎉 Payment initialized successfully! RRR:', rrr);
 
-    console.log('🔗 Payment initialized with RRR:', rrr);
-
-    // Return success response with required fields for inline widget
-    const responseData = {
+    // Return success response
+    res.json({
       success: true,
       reference: orderId,
       rrr: rrr,
       amount: amount,
-      merchantId: REMITA_CONFIG.merchantId,
-      publicKey: REMITA_CONFIG.publicKey || "test_public_key",
-      payerEmail: body.payerEmail || `${body.payerPhone.replace(/\D/g, '')}@amacpay.ng`,
-      payerPhone: body.payerPhone,
-      payerName: body.payerName,
-      currency: 'NGN',
-      country: 'NG',
-      ussdCode: ussdCode,
-      remitaResponse: remitaResponse
-    };
-
-    console.log("📋 Local server response:", responseData);
-    res.json(responseData);
-
+      remitaResponse: remitaResponse // Include full response for debugging
+    });
+  
   } catch (error) {
     console.error('❌ Error in initialize-payment:', error);
     res.status(500).json({
@@ -223,8 +196,8 @@ app.post('/initialize-payment', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
+  res.json({ 
+    status: 'ok', 
     timestamp: new Date().toISOString(),
     message: 'Payment Server with Real Remita API'
   });

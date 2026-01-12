@@ -92,14 +92,27 @@ async function testGenerateRRR() {
     console.log('✅ RRR Generation Response:', JSON.stringify(response, null, 2));
     
     // Handle different response formats
-    const rrr = response.RRR || response.rrr || (response.raw && response.raw.match(/"RRR":"([^"]+)"/)?.[1]);
+    let rrr = response.RRR || response.rrr;
     const statusCode = response.statuscode || response.statusCode;
+    
+    // Extract RRR from raw response if needed
+    if (!rrr && response.raw) {
+      const rrrMatch = response.raw.match(/"RRR":"([^"]+)"/);
+      if (rrrMatch) {
+        rrr = rrrMatch[1];
+      }
+    }
     
     if (statusCode === '025' && rrr) {
       console.log('🎉 RRR Generated Successfully:', rrr);
+      console.log('✅ Status Code:', statusCode);
+      console.log('✅ Full Response:', response);
       return rrr;
     } else {
-      console.error('❌ RRR Generation Failed:', response);
+      console.error('❌ RRR Generation Failed:');
+      console.error('   - Status Code:', statusCode);
+      console.error('   - RRR Found:', rrr);
+      console.error('   - Full Response:', response);
       return null;
     }
   } catch (error) {
@@ -183,14 +196,23 @@ function makeApiCall(url, data, method = 'POST') {
         try {
           // Handle JSONP responses from Remita
           let cleanData = responseData.trim();
+          
+          // Remove jsonp wrapper variations
           if (cleanData.startsWith('jsonp(') && cleanData.endsWith(')')) {
             cleanData = cleanData.substring(6, cleanData.length - 1);
+          } else if (cleanData.startsWith('jsonp (') && cleanData.endsWith(')')) {
+            cleanData = cleanData.substring(7, cleanData.length - 1);
           }
+          
+          // Clean up any remaining whitespace
+          cleanData = cleanData.trim();
           
           const parsedData = JSON.parse(cleanData);
           resolve(parsedData);
         } catch (error) {
-          // If JSON parsing fails, return raw data
+          console.error('❌ JSON Parse Error:', error);
+          console.error('❌ Raw Response:', responseData);
+          // If JSON parsing fails, return raw data for debugging
           resolve({ raw: responseData, status: res.statusCode });
         }
       });

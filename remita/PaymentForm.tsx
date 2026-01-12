@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Shield, Building2, CreditCard, Smartphone, Loader2, QrCode } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Shield, Building2, CreditCard, Smartphone, Loader2, Banknote } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Header from "@/components/ui/Header";
@@ -10,27 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { revenueTypes } from "@/data/revenueTypes";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RevenueType {
-  id: string;
-  code: string;
-  name: string;
-  description?: string;
-  category: string;
-  base_amount: number;
-  has_zones: boolean;
-  is_recurring: boolean;
-  icon: string;
-  is_active: boolean;
-}
-
-interface Zone {
-  id: string;
-  name: string;
-  description: string;
-  multiplier: number;
-}
+const zones = [
+  { id: "a", name: "Zone A", description: "Maitama, Asokoro, Wuse, Central Area" },
+  { id: "b", name: "Zone B", description: "Garki, Gwarinpa, Kubwa, Jabi" },
+  { id: "c", name: "Zone C", description: "Nyanya, Karu, Lugbe, Gwagwalada" },
+  { id: "d", name: "Zone D", description: "Other areas" },
+];
 
 const formatAmount = (amount: number) => {
   return new Intl.NumberFormat("en-NG", {
@@ -42,13 +30,13 @@ const formatAmount = (amount: number) => {
 };
 
 const PaymentForm = () => {
-  const { serviceCode } = useParams<{ serviceCode: string }>();
+  const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [service, setService] = useState<RevenueType | null>(null);
-  const [zones, setZones] = useState<Zone[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedGateway, setSelectedGateway] = useState<'paystack' | 'remita'>('paystack');
+  
+  const service = revenueTypes.find((r) => r.id === serviceId);
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -60,57 +48,11 @@ const PaymentForm = () => {
     email: "",
     smsUpdates: true,
     emailReceipt: true,
-    amount: 0,
+    amount: service?.baseAmount || 0,
     paymentPeriod: "annual",
     notes: "",
     confirmDetails: false,
   });
-
-  useEffect(() => {
-    loadServiceAndZones();
-  }, [serviceCode]);
-
-  useEffect(() => {
-    if (service) {
-      setFormData(prev => ({ ...prev, amount: service.base_amount }));
-    }
-  }, [service]);
-
-  const loadServiceAndZones = async () => {
-    try {
-      const [serviceResponse, zonesResponse] = await Promise.all([
-        supabase.from('revenue_types').select('*').eq('code', serviceCode).single(),
-        supabase.from('zones').select('*').order('id')
-      ]);
-
-      if (serviceResponse.error) throw serviceResponse.error;
-      if (zonesResponse.error) throw zonesResponse.error;
-
-      setService(serviceResponse.data);
-      setZones(zonesResponse.data || []);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Failed to load service details');
-      navigate('/pay');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading service details...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   if (!service) {
     return (
@@ -124,7 +66,7 @@ const PaymentForm = () => {
               The service you're looking for doesn't exist.
             </p>
             <Button asChild>
-              <Link to="/pay">Browse All Services</Link>
+              <Link to="/services">Browse All Services</Link>
             </Button>
           </div>
         </main>
@@ -151,7 +93,59 @@ const PaymentForm = () => {
     }
   };
 
-  const handleCardPayment = async () => {
+  const handlePaystackPayment = async () => {
+    // Validate required fields
+    if (!formData.businessName || !formData.phone || !formData.amount) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      console.log("Initializing Paystack payment...");
+      
+      const { data, error } = await supabase.functions.invoke('initialize-payment', {
+        body: {
+          revenueType: serviceId,
+          serviceName: service.name,
+          amount: formData.amount,
+          payerName: formData.contactPerson || formData.businessName,
+          payerPhone: formData.phone,
+          payerEmail: formData.email || undefined,
+          businessAddress: formData.address || undefined,
+          registrationNumber: formData.registrationNumber || undefined,
+          zone: formData.zone || undefined,
+          notes: formData.notes || undefined,
+        },
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to initialize payment");
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || "Payment initialization failed");
+      }
+
+      console.log("Payment initialized:", data);
+
+      // Redirect to Paystack checkout
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        throw new Error("No authorization URL received");
+      }
+
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to process payment. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRemitaPayment = async () => {
     // Validate required fields
     if (!formData.businessName || !formData.phone || !formData.amount) {
       toast.error("Please fill in all required fields");
@@ -163,48 +157,23 @@ const PaymentForm = () => {
     try {
       console.log("Initializing Remita payment...");
       
-      // Calculate final amount with zone multiplier
-      let finalAmount = formData.amount;
-      if (service.has_zones && formData.zone) {
-        const selectedZone = zones.find(z => z.id === formData.zone);
-        if (selectedZone) {
-          finalAmount = formData.amount * selectedZone.multiplier;
-        }
-      }
-      
-      let data, error;
-
-      // Try Edge Function first (for production)
-      try {
-        const result = await supabase.functions.invoke('initialize-remita', {
-          body: {
-            revenueType: service.code,
-            serviceName: service.name,
-            amount: finalAmount,
-            payerName: formData.contactPerson || formData.businessName,
-            payerPhone: formData.phone,
-            payerEmail: formData.email || undefined,
-            businessAddress: formData.address || undefined,
-            registrationNumber: formData.registrationNumber || undefined,
-            zone: formData.zone || undefined,
-            notes: formData.notes || undefined,
-          },
-        });
-        data = result.data;
-        error = result.error;
-      } catch (funcError) {
-        console.warn("Edge function failed:", funcError);
-        error = funcError;
-      }
-
-      // Edge Function failed - show error directly
-      if (error) {
-        console.log("❌ Edge function failed, no fallback available");
-        // No local server fallback - use Edge Functions only
-      }
+      const { data, error } = await supabase.functions.invoke('initialize-remita', {
+        body: {
+          revenueType: serviceId,
+          serviceName: service.name,
+          amount: formData.amount,
+          payerName: formData.contactPerson || formData.businessName,
+          payerPhone: formData.phone,
+          payerEmail: formData.email || undefined,
+          businessAddress: formData.address || undefined,
+          registrationNumber: formData.registrationNumber || undefined,
+          zone: formData.zone || undefined,
+          notes: formData.notes || undefined,
+        },
+      });
 
       if (error) {
-        console.error("Payment initialization error:", error);
+        console.error("Edge function error:", error);
         throw new Error(error.message || "Failed to initialize Remita payment");
       }
 
@@ -220,87 +189,53 @@ const PaymentForm = () => {
         existingScript.remove();
       }
 
-      console.log('🔧 Initializing Remita with:', {
-        publicKey: data.publicKey,
-        rrr: data.rrr,
-        payerName: data.payerName,
-        payerEmail: data.payerEmail,
-        payerPhone: data.payerPhone,
-        merchantId: data.merchantId
-      });
-
       const script = document.createElement('script');
       script.src = 'https://demo.remita.net/payment/v1/remita-pay-inline.bundle.js';
       script.onload = () => {
         try {
-          // Wait for script to fully load
-          setTimeout(() => {
-            // @ts-ignore - Remita global object
-            const RmPaymentEngine = (window as any).RmPaymentEngine;
-            if (!RmPaymentEngine) {
-              console.error('RmPaymentEngine not found on window:', Object.keys(window));
-              throw new Error('Remita payment engine not loaded');
-            }
+          // @ts-ignore - Remita global object
+          const RmPaymentEngine = window.RmPaymentEngine;
+          if (!RmPaymentEngine) {
+            throw new Error('Remita payment engine not loaded');
+          }
 
-            console.log('✅ Remita engine loaded, initializing payment...');
-
-            const paymentConfig = {
-              key: data.publicKey,
-              customerId: data.merchantId,
-              processRrr: true,
-              transactionId: String(data.rrr),
-              firstName: data.payerName?.split(' ')[0] || data.payerName,
-              lastName: data.payerName?.split(' ').slice(1).join(' ') || '',
-              email: data.payerEmail,
-              phone: data.payerPhone,
-              amount: data.amount,
-              narration: `${service.name} payment`,
-              extendedData: {
-                customFields: [
-                  { name: 'rrr', value: String(data.rrr) },
-                  { name: 'payerName', value: data.payerName },
-                  { name: 'payerEmail', value: data.payerEmail },
-                  { name: 'payerPhone', value: data.payerPhone },
-                  { name: 'serviceName', value: service.name },
-                  { name: 'revenueType', value: service.code },
-                ],
-              },
-              onSuccess: (response: any) => {
-                console.log('✅ Remita payment successful:', response);
-                toast.success('Payment completed successfully!');
-                navigate(`/payment-success?ref=${data.reference}&rrr=${data.rrr}&gateway=remita`);
-              },
-              onError: (response: any) => {
-                console.error('❌ Remita payment error:', response);
-                const errorMessage = response?.message || response?.error || 'Payment failed. Please try again.';
-                toast.error(errorMessage);
-                setIsProcessing(false);
-              },
-              onClose: () => {
-                console.log('🔸 Remita payment modal closed by user');
-                setIsProcessing(false);
-              },
-            };
-
-            console.log('📋 Payment config:', paymentConfig);
-
-            const paymentEngine = RmPaymentEngine.init(paymentConfig);
-            paymentEngine.showPaymentWidget();
-
-          }, 1000); // Give script time to initialize
+          const paymentEngine = RmPaymentEngine.init({
+            key: data.publicKey,
+            processRrr: true,
+            transactionId: String(data.rrr),
+            extendedData: {
+              customFields: [
+                { name: 'rrr', value: String(data.rrr) },
+                { name: 'payerName', value: data.payerName },
+                { name: 'payerEmail', value: data.payerEmail },
+                { name: 'payerPhone', value: data.payerPhone },
+              ],
+            },
+            onSuccess: (response: any) => {
+              console.log('Remita payment successful:', response);
+              navigate(`/payment-success?ref=${data.reference}&rrr=${data.rrr}&gateway=remita`);
+            },
+            onError: (response: any) => {
+              console.error('Remita payment error:', response);
+              toast.error("Payment failed. Please try again.");
+              setIsProcessing(false);
+            },
+            onClose: () => {
+              console.log('Remita payment modal closed');
+              setIsProcessing(false);
+            },
+          });
+          paymentEngine.showPaymentWidget();
         } catch (scriptError) {
-          console.error('❌ Error initializing Remita widget:', scriptError);
-          toast.error("Failed to initialize payment widget. Please try again.");
+          console.error('Error initializing Remita widget:', scriptError);
+          toast.error("Failed to initialize payment. Please try again.");
           setIsProcessing(false);
         }
       };
-      
-      script.onerror = (error) => {
-        console.error('❌ Failed to load Remita script:', error);
+      script.onerror = () => {
         toast.error("Failed to load payment gateway. Please try again.");
         setIsProcessing(false);
       };
-      
       document.body.appendChild(script);
 
     } catch (error) {
@@ -310,71 +245,11 @@ const PaymentForm = () => {
     }
   };
 
-  const handleBankTransfer = async () => {
-    // Validate required fields
-    if (!formData.businessName || !formData.phone || !formData.amount) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    // Zone is now optional - no validation required
-    // if (service.has_zones && !formData.zone) {
-    //   toast.error("Please select a zone for this service");
-    //   return;
-    // }
-
-    setIsProcessing(true);
-
-    try {
-      console.log("Creating bank transfer payment...");
-
-      // Calculate final amount with zone multiplier
-      let finalAmount = formData.amount;
-      if (service.has_zones && formData.zone) {
-        const selectedZone = zones.find(z => z.id === formData.zone);
-        if (selectedZone) {
-          finalAmount = formData.amount * selectedZone.multiplier;
-        }
-      }
-
-      // Generate unique reference for tracking
-      const reference = `AMC-${service.code.substring(0, 3).toUpperCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-
-      // Create bank transfer payment record
-      const { data: paymentData, error: paymentError } = await supabase
-        .from('payments')
-        .insert([{
-          reference,
-          payer_name: formData.contactPerson || formData.businessName,
-          payer_phone: formData.phone,
-          payer_email: formData.email || undefined,
-          property_name: formData.businessName,
-          business_address: formData.address || undefined,
-          registration_number: formData.registrationNumber || undefined,
-          service_name: service.name,
-          revenue_type: service.code,
-          revenue_type_code: service.code,
-          zone_id: formData.zone || undefined,
-          amount: finalAmount,
-          status: 'pending',
-          payment_method: 'bank_transfer',
-          payment_channel: 'bank_transfer',
-          notes: formData.notes || undefined,
-        }])
-        .select()
-        .single();
-
-      if (paymentError) throw paymentError;
-
-      console.log("Bank transfer payment created:", paymentData);
-
-      // Redirect to upload proof page
-      navigate(`/upload-proof/${paymentData.id}`);
-
-    } catch (error) {
-      console.error("Bank transfer error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to initiate bank transfer. Please try again.");
-      setIsProcessing(false);
+  const handlePayment = () => {
+    if (selectedGateway === 'remita') {
+      handleRemitaPayment();
+    } else {
+      handlePaystackPayment();
     }
   };
 
@@ -386,11 +261,11 @@ const PaymentForm = () => {
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Back Button */}
           <Link
-            to="/pay"
+            to="/services"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Payment Portal
+            Back to All Services
           </Link>
 
           {/* Service Header */}
@@ -502,31 +377,29 @@ const PaymentForm = () => {
                     />
                   </div>
 
-                  {service.has_zones && (
-                    <div>
-                      <Label htmlFor="zone">Zone (Optional)</Label>
-                      <Select
-                        value={formData.zone}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, zone: value })
-                        }
-                      >
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select Zone (Optional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {zones.map((zone) => (
-                            <SelectItem key={zone.id} value={zone.id}>
-                              <span className="font-medium">{zone.name}</span>
-                              <span className="text-muted-foreground ml-2">
-                                ({zone.description}) - {zone.multiplier}x multiplier
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div>
+                    <Label htmlFor="zone">Zone *</Label>
+                    <Select
+                      value={formData.zone}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, zone: value })
+                      }
+                    >
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Select Zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zones.map((zone) => (
+                          <SelectItem key={zone.id} value={zone.id}>
+                            <span className="font-medium">{zone.name}</span>
+                            <span className="text-muted-foreground ml-2">
+                              ({zone.description})
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div>
                     <Label htmlFor="contactPerson">Contact Person *</Label>
@@ -618,14 +491,10 @@ const PaymentForm = () => {
                   <p className="font-medium text-foreground">{service.name}</p>
                   <p className="text-sm text-muted-foreground mt-2">Business</p>
                   <p className="font-medium text-foreground">{formData.businessName || "—"}</p>
-                  {service.has_zones && (
-                    <>
-                      <p className="text-sm text-muted-foreground mt-2">Location</p>
-                      <p className="font-medium text-foreground">
-                        {zones.find((z) => z.id === formData.zone)?.name || "—"}
-                      </p>
-                    </>
-                  )}
+                  <p className="text-sm text-muted-foreground mt-2">Location</p>
+                  <p className="font-medium text-foreground">
+                    {zones.find((z) => z.id === formData.zone)?.name || "—"}
+                  </p>
                 </div>
 
                 <div className="space-y-4">
@@ -646,12 +515,7 @@ const PaymentForm = () => {
                       />
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      💡 Standard fee: {formatAmount(service.base_amount)}.
-                      {service.has_zones && formData.zone && (
-                        <span className="ml-1">
-                          Zone multiplier: {zones.find(z => z.id === formData.zone)?.multiplier}x
-                        </span>
-                      )}
+                      💡 Standard fee for this service. Enter a different amount if applicable.
                     </p>
                   </div>
 
@@ -699,30 +563,20 @@ const PaymentForm = () => {
                       <span className="text-muted-foreground">Business</span>
                       <span className="text-foreground">{formData.businessName || "—"}</span>
                     </div>
-                    {service.has_zones && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Zone</span>
-                        <span className="text-foreground">
-                          {zones.find((z) => z.id === formData.zone)?.name || "—"}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Zone</span>
+                      <span className="text-foreground">
+                        {zones.find((z) => z.id === formData.zone)?.name || "—"}
+                      </span>
+                    </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Period</span>
                       <span className="text-foreground">Jan 2026 - Dec 2026</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Base Amount</span>
+                      <span className="text-muted-foreground">Amount</span>
                       <span className="text-foreground">{formatAmount(formData.amount)}</span>
                     </div>
-                    {service.has_zones && formData.zone && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Zone Multiplier</span>
-                        <span className="text-foreground">
-                          {zones.find(z => z.id === formData.zone)?.multiplier}x
-                        </span>
-                      </div>
-                    )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Processing Fee</span>
                       <span className="text-success">₦0.00 (Waived)</span>
@@ -730,13 +584,7 @@ const PaymentForm = () => {
                     <div className="border-t border-border pt-2 mt-2">
                       <div className="flex justify-between text-base font-semibold">
                         <span>Total to Pay</span>
-                        <span className="text-primary">
-                          {formatAmount(
-                            service.has_zones && formData.zone
-                              ? formData.amount * (zones.find(z => z.id === formData.zone)?.multiplier || 1)
-                              : formData.amount
-                          )}
-                        </span>
+                        <span className="text-primary">{formatAmount(formData.amount)}</span>
                       </div>
                     </div>
                   </div>
@@ -774,18 +622,14 @@ const PaymentForm = () => {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <h2 className="text-lg font-semibold text-foreground">
-                  Step 3 of 3: Choose Payment Method
+                  Step 3 of 3: Choose Payment Gateway
                 </h2>
 
                 <div className="bg-muted/50 rounded-xl p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Amount</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {formatAmount(
-                        service.has_zones && formData.zone
-                          ? formData.amount * (zones.find(z => z.id === formData.zone)?.multiplier || 1)
-                          : formData.amount
-                      )}
+                      {formatAmount(formData.amount)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -796,132 +640,159 @@ const PaymentForm = () => {
                   </div>
                 </div>
 
-                {/* Payment Methods */}
+                {/* Gateway Selection */}
                 <div className="space-y-4">
-                  {/* Pay Now - Remita - Recommended */}
-                  <div className="border-2 border-[#006838] rounded-xl p-5 bg-[#006838]/5">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-[#006838]/10 flex items-center justify-center">
-                        <CreditCard className="w-6 h-6 text-[#006838]" />
+                  <p className="text-sm font-medium text-foreground">Select Payment Gateway:</p>
+                  
+                  {/* Paystack Option */}
+                  <div 
+                    className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                      selectedGateway === 'paystack' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedGateway('paystack')}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        selectedGateway === 'paystack' ? 'bg-primary/10' : 'bg-muted'
+                      }`}>
+                        <CreditCard className={`w-6 h-6 ${
+                          selectedGateway === 'paystack' ? 'text-primary' : 'text-muted-foreground'
+                        }`} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground">💳 PAY NOW (Card/USSD)</h3>
-                          <span className="px-2 py-0.5 bg-[#006838] text-white text-xs rounded-full">
-                            Recommended
+                          <h3 className="font-semibold text-foreground">Paystack</h3>
+                          <span className="px-2 py-0.5 bg-success/10 text-success text-xs rounded-full">
+                            Popular
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          ✓ Instant receipt • ✓ No waiting • ✓ Secure payment via Remita
+                          ✓ Card, Bank Transfer, USSD • ✓ Instant confirmation
                         </p>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          <span className="text-red-600">Note: Includes {formData.amount > 100000 ? '1.5% + ₦100' : '1.5%'} transaction fee</span>
-                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedGateway === 'paystack' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                      }`}>
+                        {selectedGateway === 'paystack' && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                     </div>
-                    <Button
-                      onClick={handleCardPayment}
-                      size="lg"
-                      className="w-full rounded-xl bg-[#006838] hover:bg-[#004d2a]"
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>Pay {formatAmount(
-                          service.has_zones && formData.zone
-                            ? formData.amount * (zones.find(z => z.id === formData.zone)?.multiplier || 1)
-                            : formData.amount
-                        )} →</>
-                      )}
-                    </Button>
                   </div>
 
-                  {/* Bank Transfer - Manual Verification */}
-                  <div className="border border-border rounded-xl p-5">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                        <Building2 className="w-6 h-6 text-orange-600" />
+                  {/* Remita Option */}
+                  <div 
+                    className={`border-2 rounded-xl p-5 cursor-pointer transition-all ${
+                      selectedGateway === 'remita' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedGateway('remita')}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        selectedGateway === 'remita' ? 'bg-primary/10' : 'bg-muted'
+                      }`}>
+                        <Banknote className={`w-6 h-6 ${
+                          selectedGateway === 'remita' ? 'text-primary' : 'text-muted-foreground'
+                        }`} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">🏦 Bank Transfer</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Takes 1-2 hours for approval • Upload proof required • Available 8AM-5PM Mon-Fri
-                        </p>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          <span className="text-green-600">No transaction fees • Save money on large payments</span>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground">Remita</h3>
+                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 text-xs rounded-full">
+                            Government
+                          </span>
                         </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          ✓ RRR Generation • ✓ Official government payment
+                        </p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedGateway === 'remita' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                      }`}>
+                        {selectedGateway === 'remita' && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-4 space-y-2 mb-4">
+                  </div>
+                </div>
+
+                {/* Pay Button */}
+                <Button
+                  onClick={handlePayment}
+                  size="lg"
+                  className="w-full rounded-xl"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {selectedGateway === 'paystack' ? '💳' : '🏦'} Pay {formatAmount(formData.amount)} with {selectedGateway === 'paystack' ? 'Paystack' : 'Remita'}
+                    </>
+                  )}
+                </Button>
+
+                {/* Alternative Payment Methods */}
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">Other payment options:</p>
+                  
+                  {/* Bank Transfer Info */}
+                  <div className="border border-border rounded-xl p-5 mb-3">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Bank Transfer</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Transfer {formatAmount(formData.amount)} to:
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Bank Name</span>
                         <span className="font-medium">Zenith Bank</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Account Number</span>
-                        <span className="font-medium font-mono">1310770007</span>
+                        <span className="font-medium font-mono">1225891457</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Account Name</span>
-                        <span className="font-medium">Abuja Municipal Area Council</span>
+                        <span className="font-medium">AMAC Revenue Account</span>
                       </div>
                     </div>
-                    <Button
-                      onClick={handleBankTransfer}
-                      variant="outline"
-                      size="lg"
-                      className="w-full rounded-xl border-orange-200 text-orange-700 hover:bg-orange-50"
-                      disabled={isProcessing}
-                    >
-                      Continue with Bank Transfer →
-                    </Button>
+                    <p className="text-sm text-muted-foreground mt-3">
+                      ⏱️ Confirmation in 1-5 minutes after transfer
+                    </p>
                   </div>
 
-                  {/* USSD Code Option */}
+                  {/* USSD */}
                   <div className="border border-border rounded-xl p-5">
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                        <Smartphone className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+                        <Smartphone className="w-6 h-6 text-muted-foreground" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">📱 USSD Code (No Internet Needed)</h3>
+                        <h3 className="font-semibold text-foreground">USSD Payment</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Dial USSD code on any mobile network • Instant payment
+                          Dial this code on your phone (no internet needed)
                         </p>
-                        <div className="bg-muted/50 rounded-lg p-3 mt-2">
-                          <p className="text-sm font-mono text-center">
-                            *322*270007777777# (Sample)
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1 text-center">
-                            USSD code will be generated after payment initialization
-                          </p>
-                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Remita App QR Code */}
-                  <div className="border border-border rounded-xl p-5">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                        <QrCode className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">📲 Remita Mobile App</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Scan QR code with Remita app • Download from app stores
-                        </p>
-                        <div className="bg-muted/50 rounded-lg p-3 mt-2 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            QR code will be generated after payment initialization
-                          </p>
-                        </div>
-                      </div>
+                    <div className="bg-muted rounded-lg p-4 text-center">
+                      <p className="font-mono text-lg font-bold text-foreground">
+                        *322*270008123456#
+                      </p>
                     </div>
+                    <p className="text-sm text-muted-foreground mt-3 text-center">
+                      Works on all networks (MTN, Airtel, Glo, 9mobile)
+                    </p>
                   </div>
                 </div>
 
