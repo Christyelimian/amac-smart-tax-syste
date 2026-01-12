@@ -1,13 +1,14 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OfflineProvider } from "@/contexts/OfflineContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
+import { OfflineDetectionWrapper } from "@/components/OfflineDetectionWrapper";
 
 // Auth pages
 import Login from "@/pages/auth/Login";
@@ -79,7 +80,8 @@ function PublicRoute() {
 function AppContent() {
   return (
     <BrowserRouter>
-      <Routes>
+      <OfflineDetectionWrapper>
+        <Routes>
         {/* Public routes - redirect authenticated users */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
@@ -101,6 +103,7 @@ function AppContent() {
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      </OfflineDetectionWrapper>
     </BrowserRouter>
   );
 }
