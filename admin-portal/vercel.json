@@ -14,15 +14,18 @@
       }
     }
   ],
+  "functions": {
+    "src/api/server.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "routes": [
     {
-      "src": "/dist/(.*)",
-      "headers": {
-        "cache-control": "s-maxage=31536000"
-      }
+      "src": "/admin-portal/(.*)",
+      "dest": "/dist/index.html"
     },
     {
-      "src": "/api/(.*)",
+      "src": "/admin-portal/api/(.*)",
       "dest": "/src/api/server.ts"
     }
   ],
