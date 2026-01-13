@@ -25,6 +25,9 @@ import ApplyAssessment from "@/pages/ApplyAssessment";
 import AssessmentForm from "@/pages/AssessmentForm";
 import DemandNoticePayment from "@/pages/DemandNoticePayment";
 
+// Receipt verification
+import ReceiptVerification from "@/pages/ReceiptVerification";
+
 // Auth routes
 import Auth from "@/pages/auth/Auth";
 
@@ -48,6 +51,21 @@ import AdminInsights from "@/pages/admin/AdminInsights";
 import AdminEnforcement from "@/pages/admin/AdminEnforcement";
 import AdminAuditLogs from "@/pages/admin/AdminAuditLogs";
 import PaymentVerification from "@/pages/admin/PaymentVerification";
+
+// New admin pages to be created
+import AdminVerifyPayments from "@/pages/admin/AdminVerifyPayments";
+import AdminRevenueAnalytics from "@/pages/admin/AdminRevenueAnalytics";
+import AdminBankReconciliation from "@/pages/admin/AdminBankReconciliation";
+import AdminRevenueTypes from "@/pages/admin/AdminRevenueTypes";
+import AdminReceipts from "@/pages/admin/AdminReceipts";
+import AdminTaxpayers from "@/pages/admin/AdminTaxpayers";
+import AdminCollectors from "@/pages/admin/AdminCollectors";
+import AdminReports from "@/pages/admin/AdminReports";
+import AdminAITools from "@/pages/admin/AdminAITools";
+import AdminUserManagement from "@/pages/admin/AdminUserManagement";
+import AdminPaymentGateways from "@/pages/admin/AdminPaymentGateways";
+import AdminMobileApp from "@/pages/admin/AdminMobileApp";
+import AdminRemitaIntegration from "@/pages/admin/AdminRemitaIntegration";
 
 // Assessment system admin routes
 import AssessmentQueue from "@/pages/admin/AssessmentQueue";
@@ -136,6 +154,10 @@ function App() {
                 <Route path="/assessment-form/:revenueTypeCode" element={<AssessmentForm />} />
                 <Route path="/pay-demand-notice" element={<DemandNoticePayment />} />
 
+                {/* Receipt Verification Route */}
+                <Route path="/verify-receipt" element={<ReceiptVerification />} />
+                <Route path="/verify/:receiptNumber" element={<ReceiptVerification />} />
+
                 {/* Mobile app menu routes */}
                 <Route path="/auction" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-2xl">AMAC Auction - Coming Soon</h1></div>} />
                 <Route path="/microfinance" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-2xl">AMAC Microfinance - Coming Soon</h1></div>} />
@@ -163,17 +185,88 @@ function App() {
               <Route element={<ProtectedRoute requireAdmin />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route element={<AdminLayout />}>
-                  {/* Assessment System Routes */}
+                  {/* REVENUE MANAGEMENT */}
+                  <Route path="/admin/transactions" element={<AdminTransactions />} />
+                  <Route path="/admin/verify-payments" element={<AdminVerifyPayments />} />
+                  <Route path="/admin/revenue-types" element={<AdminRevenueTypes />} />
+                  <Route path="/admin/revenue-analytics" element={<AdminRevenueAnalytics />} />
+                  <Route path="/admin/targets" element={<AdminDashboard />} /> {/* Redirect to main dashboard for now */}
+
+                  {/* RECEIPTS */}
+                  <Route path="/admin/receipts" element={<AdminReceipts />} />
+                  <Route path="/admin/regenerate-receipts" element={<AdminReceipts />} />
+                  <Route path="/admin/resend-receipts" element={<AdminReceipts />} />
+                  <Route path="/admin/validate-receipts" element={<AdminReceipts />} />
+
+                  {/* BANK RECONCILIATION */}
+                  <Route path="/admin/bank-connect" element={<AdminBankReconciliation />} />
+                  <Route path="/admin/auto-reconcile" element={<AdminBankReconciliation />} />
+                  <Route path="/admin/reconcile-discrepancies" element={<AdminBankReconciliation />} />
+                  <Route path="/admin/reconciliation-reports" element={<AdminBankReconciliation />} />
+
+                  {/* TAXPAYER MANAGEMENT */}
+                  <Route path="/admin/payers" element={<AdminTaxpayers />} />
+                  <Route path="/admin/businesses" element={<AdminTaxpayers />} />
+                  <Route path="/admin/properties" element={<AdminTaxpayers />} />
+                  <Route path="/admin/send-reminders" element={<AdminTaxpayers />} />
+                  <Route path="/admin/compliance" element={<AdminTaxpayers />} />
+
+                  {/* COLLECTOR MANAGEMENT */}
+                  <Route path="/admin/collectors" element={<AdminCollectors />} />
+                  <Route path="/admin/zone-assignment" element={<AdminCollectors />} />
+                  <Route path="/admin/performance" element={<AdminCollectors />} />
+                  <Route path="/admin/collections-today" element={<AdminCollectors />} />
+                  <Route path="/admin/field-app-monitor" element={<AdminCollectors />} />
+
+                  {/* REPORTS & ANALYTICS */}
+                  <Route path="/admin/revenue-reports" element={<AdminReports />} />
+                  <Route path="/admin/financial-statements" element={<AdminReports />} />
+                  <Route path="/admin/trend-analysis" element={<AdminReports />} />
+                  <Route path="/admin/target-actual" element={<AdminReports />} />
+                  <Route path="/admin/export-data" element={<AdminReports />} />
+
+                  {/* AI TOOLS */}
+                  <Route path="/admin/fraud-detection" element={<AdminAITools />} />
+                  <Route path="/admin/revenue-forecast" element={<AdminAITools />} />
+                  <Route path="/admin/smart-insights" element={<AdminAITools />} />
+                  <Route path="/admin/smart-routing" element={<AdminAITools />} />
+
+                  {/* USER MANAGEMENT */}
+                  <Route path="/admin/users" element={<AdminUserManagement />} />
+                  <Route path="/admin/roles-permissions" element={<AdminUserManagement />} />
+                  <Route path="/admin/activity-log" element={<AdminUserManagement />} />
+                  <Route path="/admin/add-user" element={<AdminUserManagement />} />
+
+                  {/* SETTINGS */}
+                  <Route path="/admin/payment-gateways" element={<AdminPaymentGateways />} />
+                  <Route path="/admin/notifications" element={<AdminSettings />} />
+                  <Route path="/admin/revenue-types-settings" element={<AdminRevenueTypes />} />
+                  <Route path="/admin/zones-locations" element={<AdminSettings />} />
+                  <Route path="/admin/system-config" element={<AdminSettings />} />
+                  <Route path="/admin/security" element={<AdminSettings />} />
+
+                  {/* MOBILE APP */}
+                  <Route path="/admin/collector-app" element={<AdminMobileApp />} />
+                  <Route path="/admin/active-users" element={<AdminMobileApp />} />
+                  <Route path="/admin/app-analytics" element={<AdminMobileApp />} />
+
+                  {/* REMITA INTEGRATION */}
+                  <Route path="/admin/remita-integration" element={<AdminRemitaIntegration />} />
+
+                  {/* HELP & SUPPORT */}
+                  <Route path="/admin/documentation" element={<AdminDashboard />} />
+                  <Route path="/admin/training" element={<AdminDashboard />} />
+                  <Route path="/admin/contact-support" element={<AdminDashboard />} />
+                  <Route path="/admin/report-bug" element={<AdminDashboard />} />
+
+                  {/* Legacy Assessment System Routes */}
                   <Route path="/admin/assessment-queue" element={<AssessmentQueue />} />
                   <Route path="/admin/assessment-review/:applicationId" element={<AssessmentReview />} />
                   <Route path="/admin/data-migration" element={<DataMigration />} />
 
                   {/* Legacy Admin Routes */}
                   <Route path="/admin/legacy" element={<Admin />} />
-                  <Route path="/admin/transactions" element={<AdminTransactions />} />
                   <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                  <Route path="/admin/payers" element={<AdminPayers />} />
-                  <Route path="/admin/settings" element={<AdminSettings />} />
                   <Route path="/admin/insights" element={<AdminInsights />} />
                   <Route path="/admin/enforcement" element={<AdminEnforcement />} />
                   <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />

@@ -60,6 +60,9 @@ export default function Index() {
             <span className="font-display font-bold text-xl">AMAC Revenue</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
+            <a href="https://www.jotform.com/app/230894663123559" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              AMAC REVENUE APP
+            </a>
             <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Home
             </Link>

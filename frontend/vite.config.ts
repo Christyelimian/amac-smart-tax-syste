@@ -47,8 +47,37 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/]
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [
+          /^\/_/,                    // API routes
+          /\/[^/?]+\.[^/]+$/,        // Files with extensions
+          /^\/api\//,                // API endpoints
+        ],
+        maximumFileSizeToCacheInBytes: 5000000, // 5MB limit
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:js|css|html|ico|png|svg|woff2)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          }
+        ]
       },
       devOptions: {
         enabled: false

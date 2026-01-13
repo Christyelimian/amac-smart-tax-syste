@@ -7,6 +7,8 @@
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "preview": "cd frontend && npm run preview",
+    "server:dev": "nodemon simple_payment_server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server:dev\"",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
@@ -18,7 +20,24 @@
     "deploy:win": "npm run build && docker-compose build && docker-compose up -d",
     "clean": "docker-compose down -v && cd frontend && rm -rf node_modules dist"
   },
-  "keywords": ["react", "vite", "docker", "revenue", "amac", "supabase", "paystack"],
+  "keywords": [
+    "react",
+    "vite",
+    "docker",
+    "revenue",
+    "amac",
+    "supabase",
+    "paystack"
+  ],
   "author": "AMAC Revenue Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11"
+  }
 }

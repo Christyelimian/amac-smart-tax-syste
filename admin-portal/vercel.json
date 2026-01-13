@@ -1,0 +1,35 @@
+{
+  "name": "amac-admin-portal",
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/api/server.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "functions": {
+    "src/api/server.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/admin-portal/(.*)",
+      "dest": "/dist/index.html"
+    },
+    {
+      "src": "/admin-portal/api/(.*)",
+      "dest": "/src/api/server.ts"
+    }
+  ],
+  "env": {
+    "MONGODB_URI": "mongodb+srv://Vercel-Admin-amac-portal:7RgEZUPY3lVKn5g4@amac-portal.tegr73k.mongodb.net/?retryWrites=true&w=majority"
+  }
+}

@@ -55,30 +55,42 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       // Fetch total paid in 2026
-      const { data: paymentsData } = await supabase
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
         .select('amount, service_name, status, created_at, reference, id')
-        .eq('user_id', user!.id)
+        .eq('payer_email', user!.email)
         .gte('created_at', '2026-01-01')
         .order('created_at', { ascending: false })
         .limit(5);
 
+      if (paymentsError) {
+        console.error('Payments query error:', paymentsError);
+      }
+
       // Fetch properties count
-      const { count: propertiesCount } = await supabase
+      const { count: propertiesCount, error: propertiesError } = await supabase
         .from('user_properties')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id);
+
+      if (propertiesError) {
+        console.error('Properties query error:', propertiesError);
+      }
 
       // Fetch upcoming dues
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       
-      const { count: upcomingCount } = await supabase
+      const { count: upcomingCount, error: upcomingError } = await supabase
         .from('user_properties')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id)
         .lt('due_date', thirtyDaysFromNow.toISOString())
         .gte('due_date', new Date().toISOString());
+
+      if (upcomingError) {
+        console.error('Upcoming dues query error:', upcomingError);
+      }
 
       const confirmedPayments = paymentsData?.filter(p => p.status === 'confirmed') || [];
       const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);

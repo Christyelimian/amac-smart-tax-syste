@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Server Test</title>
+</head>
+<body>
+    <h1>Testing Payment Server from Browser</h1>
+    <button onclick="testPayment()">Test Payment</button>
+    <div id="result"></div>
+
+    <script>
+        async function testPayment() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('🚀 Starting browser payment test...');
+                
+                const response = await fetch('http://localhost:3001/initialize-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        revenueType: 'SHOP_LICENSE',
+                        serviceName: 'Shop License',
+                        amount: 50000,
+                        payerName: 'Browser Test User',
+                        payerPhone: '08012345678',
+                        payerEmail: 'browser@test.com',
+                        businessAddress: '123 Browser Street',
+                        registrationNumber: 'BROWSER123',
+                        zone: 'zone_a',
+                        notes: 'Browser test payment'
+                    }),
+                });
+
+                console.log('📊 Response status:', response.status);
+                console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
+                // Check if response has content
+                const responseText = await response.text();
+                console.log('📝 Raw response text:', responseText);
+                
+                if (!responseText.trim()) {
+                    throw new Error('Empty response from payment server');
+                }
+                
+                // Try to parse as JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('✅ Parsed JSON response:', data);
+                } catch (parseError) {
+                    console.error('❌ JSON parse error:', parseError.message);
+                    console.error('📄 Raw text that failed to parse:', responseText);
+                    throw new Error(`Invalid JSON response from server: ${parseError.message}`);
+                }
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Payment initialization failed');
+                }
+                
+                console.log('🎉 Browser payment test successful!');
+                console.log('💳 Payment URL:', data.paymentUrl);
+                console.log('📋 RRR:', data.rrr);
+                
+                resultDiv.innerHTML = `
+                    <h2>✅ Success!</h2>
+                    <p><strong>RRR:</strong> ${data.rrr}</p>
+                    <p><strong>Payment URL:</strong> <a href="${data.paymentUrl}" target="_blank">${data.paymentUrl}</a></p>
+                    <p><strong>Amount:</strong> ₦${data.amount.toLocaleString()}</p>
+                `;
+                
+            } catch (error) {
+                console.error('❌ Browser payment test failed:', error.message);
+                resultDiv.innerHTML = `
+                    <h2>❌ Error</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Check browser console for details</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

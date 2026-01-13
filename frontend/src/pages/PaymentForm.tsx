@@ -158,16 +158,11 @@ const PaymentForm = () => {
       return;
     }
 
-    if (service.has_zones && !formData.zone) {
-      toast.error("Please select a zone for this service");
-      return;
-    }
-
     setIsProcessing(true);
-
+    
     try {
       console.log("Initializing Remita payment...");
-
+      
       // Calculate final amount with zone multiplier
       let finalAmount = formData.amount;
       if (service.has_zones && formData.zone) {
@@ -176,43 +171,141 @@ const PaymentForm = () => {
           finalAmount = formData.amount * selectedZone.multiplier;
         }
       }
+      
+      let data, error;
 
-      const { data, error } = await supabase.functions.invoke('initialize-payment', {
-        body: {
-          revenueType: service.code,
-          serviceName: service.name,
-          amount: finalAmount,
-          payerName: formData.contactPerson || formData.businessName,
-          payerPhone: formData.phone,
-          payerEmail: formData.email || undefined,
-          businessAddress: formData.address || undefined,
-          registrationNumber: formData.registrationNumber || undefined,
-          zone: formData.zone || undefined,
-          notes: formData.notes || undefined,
-        },
-      });
+      // Try Edge Function first (for production)
+      try {
+        const result = await supabase.functions.invoke('initialize-remita', {
+          body: {
+            revenueType: service.code,
+            serviceName: service.name,
+            amount: finalAmount,
+            payerName: formData.contactPerson || formData.businessName,
+            payerPhone: formData.phone,
+            payerEmail: formData.email || undefined,
+            businessAddress: formData.address || undefined,
+            registrationNumber: formData.registrationNumber || undefined,
+            zone: formData.zone || undefined,
+            notes: formData.notes || undefined,
+          },
+        });
+        data = result.data;
+        error = result.error;
+      } catch (funcError) {
+        console.warn("Edge function failed:", funcError);
+        error = funcError;
+      }
+
+      // Edge Function failed - show error directly
+      if (error) {
+        console.log("❌ Edge function failed, no fallback available");
+        // No local server fallback - use Edge Functions only
+      }
 
       if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to initialize payment");
+        console.error("Payment initialization error:", error);
+        throw new Error(error.message || "Failed to initialize Remita payment");
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || "Payment initialization failed");
+        throw new Error(data?.error || "Remita payment initialization failed");
       }
 
-      console.log("Payment initialized:", data);
+      console.log("Remita RRR generated:", data);
 
-      // Redirect to Remita payment page
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error("No payment URL received");
+      // Load Remita inline payment script and process payment
+      const existingScript = document.querySelector('script[src*="remita-pay-inline"]');
+      if (existingScript) {
+        existingScript.remove();
       }
+
+      console.log('🔧 Initializing Remita with:', {
+        publicKey: data.publicKey,
+        rrr: data.rrr,
+        payerName: data.payerName,
+        payerEmail: data.payerEmail,
+        payerPhone: data.payerPhone,
+        merchantId: data.merchantId
+      });
+
+      const script = document.createElement('script');
+      script.src = 'https://demo.remita.net/payment/v1/remita-pay-inline.bundle.js';
+      script.onload = () => {
+        try {
+          // Wait for script to fully load
+          setTimeout(() => {
+            // @ts-ignore - Remita global object
+            const RmPaymentEngine = (window as any).RmPaymentEngine;
+            if (!RmPaymentEngine) {
+              console.error('RmPaymentEngine not found on window:', Object.keys(window));
+              throw new Error('Remita payment engine not loaded');
+            }
+
+            console.log('✅ Remita engine loaded, initializing payment...');
+
+            const paymentConfig = {
+              key: data.publicKey,
+              customerId: data.merchantId,
+              processRrr: true,
+              transactionId: String(data.rrr),
+              firstName: data.payerName?.split(' ')[0] || data.payerName,
+              lastName: data.payerName?.split(' ').slice(1).join(' ') || '',
+              email: data.payerEmail,
+              phone: data.payerPhone,
+              amount: data.amount,
+              narration: `${service.name} payment`,
+              extendedData: {
+                customFields: [
+                  { name: 'rrr', value: String(data.rrr) },
+                  { name: 'payerName', value: data.payerName },
+                  { name: 'payerEmail', value: data.payerEmail },
+                  { name: 'payerPhone', value: data.payerPhone },
+                  { name: 'serviceName', value: service.name },
+                  { name: 'revenueType', value: service.code },
+                ],
+              },
+              onSuccess: (response: any) => {
+                console.log('✅ Remita payment successful:', response);
+                toast.success('Payment completed successfully!');
+                navigate(`/payment-success?ref=${data.reference}&rrr=${data.rrr}&gateway=remita`);
+              },
+              onError: (response: any) => {
+                console.error('❌ Remita payment error:', response);
+                const errorMessage = response?.message || response?.error || 'Payment failed. Please try again.';
+                toast.error(errorMessage);
+                setIsProcessing(false);
+              },
+              onClose: () => {
+                console.log('🔸 Remita payment modal closed by user');
+                setIsProcessing(false);
+              },
+            };
+
+            console.log('📋 Payment config:', paymentConfig);
+
+            const paymentEngine = RmPaymentEngine.init(paymentConfig);
+            paymentEngine.showPaymentWidget();
+
+          }, 1000); // Give script time to initialize
+        } catch (scriptError) {
+          console.error('❌ Error initializing Remita widget:', scriptError);
+          toast.error("Failed to initialize payment widget. Please try again.");
+          setIsProcessing(false);
+        }
+      };
+      
+      script.onerror = (error) => {
+        console.error('❌ Failed to load Remita script:', error);
+        toast.error("Failed to load payment gateway. Please try again.");
+        setIsProcessing(false);
+      };
+      
+      document.body.appendChild(script);
 
     } catch (error) {
-      console.error("Payment error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to process payment. Please try again.");
+      console.error("Remita payment error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to process Remita payment. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -224,10 +317,11 @@ const PaymentForm = () => {
       return;
     }
 
-    if (service.has_zones && !formData.zone) {
-      toast.error("Please select a zone for this service");
-      return;
-    }
+    // Zone is now optional - no validation required
+    // if (service.has_zones && !formData.zone) {
+    //   toast.error("Please select a zone for this service");
+    //   return;
+    // }
 
     setIsProcessing(true);
 
@@ -410,7 +504,7 @@ const PaymentForm = () => {
 
                   {service.has_zones && (
                     <div>
-                      <Label htmlFor="zone">Zone *</Label>
+                      <Label htmlFor="zone">Zone (Optional)</Label>
                       <Select
                         value={formData.zone}
                         onValueChange={(value) =>
@@ -418,7 +512,7 @@ const PaymentForm = () => {
                         }
                       >
                         <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select Zone" />
+                          <SelectValue placeholder="Select Zone (Optional)" />
                         </SelectTrigger>
                         <SelectContent>
                           {zones.map((zone) => (

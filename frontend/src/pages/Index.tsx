@@ -45,6 +45,13 @@ const Index = () => {
   const menuItems = [
     {
       title: "AMAC REVENUE",
+      path: "https://www.jotform.com/app/230894663123559",
+      icon: DollarSign,
+      color: "bg-[#2d5016] hover:bg-[#1a2d0d]",
+      textColor: "text-white"
+    },
+    {
+      title: "SMART TAX",
       path: "/revenue",
       icon: DollarSign,
       color: "bg-[#2d5016] hover:bg-[#1a2d0d]",
